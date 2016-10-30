@@ -22,7 +22,7 @@
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.1.5-SNAPSHOT</version>
+        <version>5.1.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -36,10 +36,6 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
             <artifactId>org.wso2.carbon.identity.scim.common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.charon</groupId>
-            <artifactId>org.wso2.charon.core</artifactId>
         </dependency>
     </dependencies>
 
@@ -101,7 +97,6 @@
                                 </properties>
                             </adviceFile>
                             <bundles>
-                                <bundleDef>org.wso2.charon:org.wso2.charon.core</bundleDef>
                                 <bundleDef>org.wso2.carbon.identity.inbound.provisioning.scim:org.wso2.carbon.identity.scim.common</bundleDef>
                             </bundles>
                             <importFeatures>

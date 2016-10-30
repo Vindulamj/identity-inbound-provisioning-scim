@@ -20,35 +20,39 @@ package org.wso2.carbon.identity.scim.provider.util;
 
 public class SCIMProviderConstants {
 
-    public static final String PROPERTY_NAME_PRIORITY = "Priority";
-    public static final String PROPERTY_NAME_AUTH_SERVER = "AuthorizationServer";
-    public static final String PROPERTY_NAME_USERNAME = "UserName";
-    public static final String PROPERTY_NAME_PASSWORD = "Password";
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String ATTRIBUTES = "attributes";
+    public static final String EXCLUDE_ATTRIBUTES = "excludedAttributes";
+    public static final String APPLICATION_SCIM_JSON = "application/scim+json";
+    public static final String APPLICATION__JSON = "application/json";
+    public static final String ACCEPT_HEADER = "Accept";
 
-    public static final String ELEMENT_NAME_SCIM = "SCIM";
-    public static final String ELEMENT_NAME_SCIM_AUTHENTICATORS = "SCIMAuthenticators";
-    public static final String ELEMENT_NAME_AUTHENTICATOR = "Authenticator";
-    public static final String ELEMENT_NAME_PROPERTY = "Property";
+    //ServiceProviderConfig endpoint related constants
 
-    public static final String ATTRIBUTE_NAME_NAME = "name";
-    public static final String ATTRIBUTE_NAME_CLASS = "class";
+    public static final String DOCUMENTATION_URL = "";
+    public static final int MAX_OPERATIONS = 1000;
+    public static final int MAX_PAYLOAD_SIZE = 1048576;
+    public static final int MAX_RESULTS = 200;
+    public static final int COUNT_FOR_PAGINATION = 2;
 
-    public static final String DEFAULT_SCIM_DIALECT = "urn:scim:schemas:core:1.0";
+    public static final String AUTHENTICATION_SCHEMES_NAME_1 = "OAuth Bearer Token";
+    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_1 =
+            "Authentication scheme using the OAuth Bearer Token Standard";
+    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_1 = "http://www.rfc-editor.org/info/rfc6750";
+    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1 = "http://example.com/help/oauth.html";
+    public static final String AUTHENTICATION_SCHEMES_TYPE_1 = "oauthbearertoken";
+    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_1 = true;
 
-    public static final String ID = "ID";
-    public static final String INPUT_FORMAT = "INPUT_FORMAT";
-    public static final String OUTPUT_FORMAT = "INPUT_FORMAT";
-    public static final String AUTHORIZATION = "AUTHORIZATION";
-    public static final String RESOURCE_STRING = "RESOURCE_STRING";
-    public static final String HTTP_VERB = "HTTP_VERB";
-    public static final String SEARCH_ATTRIBUTE = "SEARCH_ATTRIBUTE";
-    public static final String FILTER = "FILTER";
-    public static final String START_INDEX = "START_INDEX";
-    public static final String COUNT = "COUNT";
-    public static final String SORT_BY = "SORT_BY";
-    public static final String SORT_ORDER = "SORT_ORDER";
-    public static final String PATCH = "PATCH";
+    public static final String AUTHENTICATION_SCHEMES_NAME_2 = "HTTP Basic";
+    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_2 = "Authentication scheme using the HTTP Basic Standard";
+    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_2 = "http://www.rfc-editor.org/info/rfc2617";
+    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2 = "http://example.com/help/httpBasic.html";
+    public static final String AUTHENTICATION_SCHEMES_TYPE_2 = "httpbasic";
+    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_2 = false;
 
-    private SCIMProviderConstants(){}
+
+
+
 
 }

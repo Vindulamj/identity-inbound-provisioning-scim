@@ -23,23 +23,5 @@ package org.wso2.carbon.identity.scim.common.utils;
  */
 public class SCIMCommonConstants {
 
-    public static final String IS_ROLE_NAME_CHANGED_ON_UPDATE = "ISRoleNameChangedOnUpdate";
-    public static final String OLD_GROUP_NAME = "OldGroupName";
-    /*This permission is required to see the 'my scim providers ui' to configure providers per account
-    * and also to authorize provisioning requests.*/
-    public static final String PROVISIONING_ADMIN_PERMISSION = "/permission/admin/configure/security/usermgt/provisioning";
-    /*This permission is required to see the tenant space providers*/
-    public static final String PROVISIONING_ADMIN_GLOBAL_CONFIG_PERMISSION = "/permission/admin/configure/security";
-    /*Users with this permission can provision their profile updates*/
-    public static final String PROVISIONING_USER_PERMISSION = "/permission/admin/login";
-    public static final String RESOURCE_TO_BE_AUTHORIZED = "ui.execute";
-
-    //cache id
-    public static final String SCIM_CACHE = "SCIM_CACHE";
-
-    public static final String SCIM_CLAIM_DIALECT = "urn:scim:schemas:core:1.0";
-
-    private  SCIMCommonConstants(){}
-
 }
 

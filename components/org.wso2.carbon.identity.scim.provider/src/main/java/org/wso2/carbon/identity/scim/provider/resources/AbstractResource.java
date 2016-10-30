@@ -20,46 +20,49 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.scim.provider.util.JAXRSResponseBuilder;
-import org.wso2.charon.core.encoder.Encoder;
-import org.wso2.charon.core.encoder.json.JSONEncoder;
-import org.wso2.charon.core.exceptions.CharonException;
-import org.wso2.charon.core.exceptions.FormatNotSupportedException;
-import org.wso2.charon.core.protocol.ResponseCodeConstants;
-import org.wso2.charon.core.protocol.endpoints.AbstractResourceEndpoint;
-import org.wso2.charon.core.schema.SCIMConstants;
+import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
+import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
+import org.wso2.charon.core.v2.encoder.JSONEncoder;
+import org.wso2.charon.core.v2.exceptions.CharonException;
+import org.wso2.charon.core.v2.exceptions.FormatNotSupportedException;
+import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
 
 import javax.ws.rs.core.Response;
 
 public class AbstractResource {
     private static Log logger = LogFactory.getLog(AbstractResource.class);
-    private Encoder defaultEncoder = new JSONEncoder();
+    private JSONEncoder defaultEncoder = new JSONEncoder();
 
-    public String identifyOutputFormat(String format) {
-        if (format == null || "*/*".equals(format) || format.startsWith(SCIMConstants.APPLICATION_JSON)) {
-            return SCIMConstants.APPLICATION_JSON;
+    //identify the output format
+    public boolean isValidOutputFormat(String format) {
+        if (format == null || "*/*".equals(format) ||
+                format.equalsIgnoreCase(SCIMProviderConstants.APPLICATION__JSON)
+                || format.equalsIgnoreCase(SCIMProviderConstants.APPLICATION_SCIM_JSON) ) {
+            return true;
         } else {
-            return format;
+            return false;
         }
     }
-
-    public String identifyInputFormat(String format) {
-        if (format == null || "*/*".equals(format) || format.startsWith(SCIMConstants.APPLICATION_JSON)) {
-            return SCIMConstants.APPLICATION_JSON;
+    //identify the input format
+    public boolean isValidInputFormat(String format) {
+        if (format == null || "*/*".equals(format) ||
+                format.equalsIgnoreCase(SCIMProviderConstants.APPLICATION__JSON)
+                || format.equalsIgnoreCase(SCIMProviderConstants.APPLICATION_SCIM_JSON)) {
+            return true;
         } else {
-            return format;
+            return false;
         }
     }
 
     /**
-     * Build an error message for a Charon exception. Encoding format depends on the 'Accept' header. We go with the
+     * Build an error message for a Charon exception. We go with the
      * JSON encoder as default if not specified.
      *
      * @param e CharonException
      * @param encoder
      * @return
      */
-    protected Response handleCharonException(CharonException e, Encoder encoder) {
+    protected Response handleCharonException(CharonException e, JSONEncoder encoder) {
         if (logger.isDebugEnabled()) {
             logger.debug(e.getMessage(), e);
         }
@@ -70,11 +73,7 @@ public class AbstractResource {
             encoder = defaultEncoder;
         }
 
-        //create SCIM response with code as the same of exception and message as error message of the exception
-        if (e.getCode() == -1) {
-            e.setCode(ResponseCodeConstants.CODE_INTERNAL_SERVER_ERROR);
-        }
-        return new JAXRSResponseBuilder().buildResponse(AbstractResourceEndpoint.encodeSCIMException(encoder, e));
+        return new SupportUtils().buildResponse(AbstractResourceManager.encodeSCIMException(e));
     }
 
     /**
@@ -89,7 +88,7 @@ public class AbstractResource {
         }
 
         // use the default JSON encoder to build the error response.
-        return new JAXRSResponseBuilder().buildResponse(
-                AbstractResourceEndpoint.encodeSCIMException(defaultEncoder, e));
+        return new SupportUtils().buildResponse(
+                AbstractResourceManager.encodeSCIMException(e));
     }
 }

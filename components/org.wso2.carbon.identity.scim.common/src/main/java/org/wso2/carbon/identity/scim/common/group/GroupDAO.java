@@ -22,12 +22,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.scim.common.utils.IdentitySCIMException;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.identity.scim.common.utils.SQLQueries;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
-import org.wso2.charon.core.schema.SCIMConstants;
+import org.wso2.charon.core.v2.schema.SCIMConstants;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -61,7 +59,7 @@ public class GroupDAO {
         try {
             //retrieve groups from the DB
             prepStmt = connection.prepareStatement(SQLQueries.LIST_SCIM_GROUPS_SQL);
-            prepStmt.setString(1, SCIMConstants.ID_URI);
+            prepStmt.setString(1, SCIMConstants.CommonSchemaConstants.ID_URI);
             resultSet = prepStmt.executeQuery();
             while (resultSet.next()) {
                 String group = resultSet.getString(1);
@@ -266,7 +264,7 @@ public class GroupDAO {
             prepStmt = connection.prepareStatement(SQLQueries.GET_GROUP_NAME_BY_ID_SQL);
             prepStmt.setInt(1, tenantId);
             prepStmt.setString(2, id);
-            prepStmt.setString(3, SCIMConstants.ID_URI);
+            prepStmt.setString(3, SCIMConstants.CommonSchemaConstants.ID_URI);
             rSet = prepStmt.executeQuery();
             while (rSet.next()) {
                 //we assume only one result since group id and tenant id is unique.

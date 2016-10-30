@@ -24,11 +24,11 @@
         <version>1</version>
     </parent>
 
-    <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+    <groupId>org.wso2.carbon.identity</groupId>
     <artifactId>identity-inbound-provisioning-scim</artifactId>
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
-    <version>5.1.5-SNAPSHOT</version>
+    <version>5.1.2</version>
     <name>WSO2 Carbon - SCIM Provisioning Module</name>
     <description>
 
@@ -39,16 +39,11 @@
         <url>https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</connection>
-        <tag>HEAD</tag>
+        <tag>v5.1.2</tag>
     </scm>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.wso2.charon</groupId>
-                <artifactId>org.wso2.charon.core</artifactId>
-                <version>${charon.wso2.version.identity}</version>
-            </dependency>
             <dependency>
                 <groupId>javax.ws.rs</groupId>
                 <artifactId>jsr311-api</artifactId>
@@ -61,45 +56,45 @@
                 <version>${cxf-bundle.wso2.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.common.feature</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.provider.feature</artifactId>
                 <version>${project.version}</version>
                 <type>zip</type>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.ui</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.common.stub</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.scim.provider</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth.stub</artifactId>
                 <version>${inbound.auth.oauth.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.oauth</artifactId>
                 <version>${inbound.auth.oauth.version}</version>
             </dependency>
@@ -124,7 +119,7 @@
                 <version>${carbon.kernel.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.core</artifactId>
                 <version>${identity.framework.version}</version>
             </dependency>
@@ -135,7 +130,7 @@
                 <version>${junit.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.wso2.carbon.identity.framework</groupId>
+                <groupId>org.wso2.carbon.identity</groupId>
                 <artifactId>org.wso2.carbon.identity.provisioning</artifactId>
                 <version>${identity.framework.version}</version>
             </dependency>
@@ -239,23 +234,18 @@
     <modules>
         <module>components/org.wso2.carbon.identity.scim.common</module>
         <module>components/org.wso2.carbon.identity.scim.provider</module>
-        <module>components/org.wso2.carbon.identity.scim.ui</module>
-        <module>components/org.wso2.carbon.identity.scim.common.stub</module>
 
         <module>features/org.wso2.carbon.identity.scim.common.feature</module>
-        <module>features/org.wso2.carbon.identity.scim.feature</module>
         <module>features/org.wso2.carbon.identity.scim.provider.feature</module>
-        <module>features/org.wso2.carbon.identity.scim.ui.feature</module>
     </modules>
 
     <properties>
-        <charon.wso2.version.identity>2.0.7</charon.wso2.version.identity>
-        <charon.core.imp.pkg.version.range>[2.0.1,3.0.0)</charon.core.imp.pkg.version.range>
         <jsr311-api.version>1.1.1</jsr311-api.version>
         <cxf-bundle.wso2.version>2.6.1.wso2v2</cxf-bundle.wso2.version>
-        <inbound.auth.oauth.version>5.2.0</inbound.auth.oauth.version>
+        <inbound.auth.oauth.version>5.1.0</inbound.auth.oauth.version>
         <commons-collections.version>3.2.0.wso2v1</commons-collections.version>
         <carbon.kernel.version>4.4.7</carbon.kernel.version>
+        <identity.framework.version>5.2.0</identity.framework.version>
         <junit.version>4.11</junit.version>
 
         <!--Maven Plugin Version-->
@@ -271,7 +261,7 @@
 
         <carbon.p2.plugin.version>1.5.3</carbon.p2.plugin.version>
 
-        <identity.framework.version>5.5.0</identity.framework.version>
+        <identity.framework.version>5.2.0</identity.framework.version>
         <identity.inbound.provisioning.scim.export.version>${project.version}
         </identity.inbound.provisioning.scim.export.version>
         <axiom.osgi.version.range>[1.2.11, 2.0.0)</axiom.osgi.version.range>
@@ -354,7 +344,6 @@
     </build>
 
 </project>
-
 
 
 

@@ -20,12 +20,7 @@ package org.wso2.carbon.identity.scim.provider.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.scim.provider.auth.BasicAuthHandler;
-import org.wso2.carbon.identity.scim.provider.auth.OAuthHandler;
-import org.wso2.carbon.identity.scim.provider.auth.SCIMAuthConfigReader;
-import org.wso2.carbon.identity.scim.provider.auth.SCIMAuthenticationHandler;
-import org.wso2.carbon.identity.scim.provider.auth.SCIMAuthenticatorRegistry;
-import org.wso2.charon.core.exceptions.CharonException;
+import org.wso2.charon.core.v2.exceptions.CharonException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -44,9 +39,6 @@ public class ApplicationInitializer implements ServletContextListener {
             logger.debug("Initializing SCIM Webapp...");
         }
         try {
-            //Initialize Authentication Registry
-            initSCIMAuthenticatorRegistry();
-
             //initialize identity scim manager
             IdentitySCIMManager.getInstance();
 
@@ -61,28 +53,4 @@ public class ApplicationInitializer implements ServletContextListener {
         // Do nothing
     }
 
-    private void initSCIMAuthenticatorRegistry() {
-        SCIMAuthenticatorRegistry scimAuthRegistry = SCIMAuthenticatorRegistry.getInstance();
-        if (scimAuthRegistry != null) {
-            //set authenticators after building auth config
-            SCIMAuthConfigReader configReader = new SCIMAuthConfigReader();
-            List<SCIMAuthenticationHandler> SCIMAuthenticators = configReader.buildSCIMAuthenticators();
-            if (SCIMAuthenticators != null && !SCIMAuthenticators.isEmpty()) {
-                for (SCIMAuthenticationHandler scimAuthenticator : SCIMAuthenticators) {
-                    scimAuthRegistry.setAuthenticator(scimAuthenticator);
-                }
-
-            } else {
-                //initialize default basic auth authenticator & OAuth authenticator and set it in the auth registry.
-                BasicAuthHandler basicAuthHandler = new BasicAuthHandler();
-                basicAuthHandler.setDefaultPriority();
-                scimAuthRegistry.setAuthenticator(basicAuthHandler);
-
-                OAuthHandler oauthHandler = new OAuthHandler();
-                oauthHandler.setDefaultPriority();
-                oauthHandler.setDefaultAuthzServer();
-                scimAuthRegistry.setAuthenticator(oauthHandler);
-            }
-        }
-    }
 }

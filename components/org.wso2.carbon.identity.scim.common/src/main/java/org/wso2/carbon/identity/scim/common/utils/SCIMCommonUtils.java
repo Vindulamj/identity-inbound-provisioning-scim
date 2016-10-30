@@ -32,6 +32,7 @@ public class SCIMCommonUtils {
 
     private static String scimGroupLocation;
     private static String scimUserLocation;
+    private static String scimServiceProviderConfig;
     /**
      * Since we need perform provisioning through UserOperationEventListeenr implementation -
      *
@@ -55,7 +56,7 @@ public class SCIMCommonUtils {
     public static void init() {
         //to initialize scim urls once.
         //construct SCIM_USER_LOCATION and SCIM_GROUP_LOCATION like: https://localhost:9443/wso2/scim/Groups
-        if (scimUserLocation == null || scimGroupLocation == null) {
+        if (scimUserLocation == null || scimGroupLocation == null || scimServiceProviderConfig == null) {
             String portOffSet = ServerConfiguration.getInstance().getFirstProperty("Ports.Offset");
             //TODO: read the https port from config file. Here the default one is hardcoded, but offset is read from config
             int httpsPort = 9443 + Integer.parseInt(portOffSet);
@@ -63,6 +64,7 @@ public class SCIMCommonUtils {
                     + ":" + String.valueOf(httpsPort) + "/wso2/scim/";
             scimUserLocation = scimURL + "Users";
             scimGroupLocation = scimURL + "Groups";
+            scimServiceProviderConfig = scimURL + "ServiceProviderConfig";
         }
     }
 
@@ -72,6 +74,10 @@ public class SCIMCommonUtils {
 
     public static String getSCIMGroupURL(String id) {
         return scimGroupLocation + "/" + id;
+    }
+
+    public static String getSCIMServiceProviderConfigURL(String id){
+        return scimServiceProviderConfig + "/" +id;
     }
 
     /*Handling ThreadLocals*/
@@ -90,6 +96,14 @@ public class SCIMCommonUtils {
         }
         init();
         return scimGroupLocation;
+    }
+
+    public static String getSCIMServiceProviderConfigURL() {
+        if (scimServiceProviderConfig != null) {
+            return scimServiceProviderConfig;
+        }
+        init();
+        return scimServiceProviderConfig;
     }
 
     public static void unsetThreadLocalToSkipSetUserClaimsListeners() {

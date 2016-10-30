@@ -18,10 +18,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
-        <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+        <groupId>org.wso2.carbon.identity</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.1.5-SNAPSHOT</version>
+        <version>5.1.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -47,11 +47,7 @@
             <artifactId>org.wso2.carbon.utils</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wso2.charon</groupId>
-            <artifactId>org.wso2.charon.core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon.identity.framework</groupId>
+            <groupId>org.wso2.carbon.identity</groupId>
             <artifactId>org.wso2.carbon.identity.core</artifactId>
             <exclusions>
                 <exclusion>
@@ -79,6 +75,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>Charon</groupId>
+            <artifactId>org.charon</artifactId>
+            <version>3.0.0</version>
+            <scope>system</scope>
+            <systemPath>/home/vindula/Desktop/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
         </dependency>
     </dependencies>
 
@@ -135,7 +138,6 @@
 
                             org.wso2.carbon.base; version="${carbon.base.imp.pkg.version.range}",
                             org.wso2.carbon.user.api; version="${carbon.user.api.imp.pkg.version.range}",
-                            org.wso2.charon.core.*;version="${charon.core.imp.pkg.version.range}",
 
                             org.wso2.carbon.identity.base; version="${identity.framework.version}",
                             org.wso2.carbon.identity.core.*; version="${identity.framework.version}",

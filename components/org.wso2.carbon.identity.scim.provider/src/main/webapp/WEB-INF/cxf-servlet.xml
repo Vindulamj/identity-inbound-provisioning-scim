@@ -25,55 +25,23 @@
          http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd
          http://cxf.apache.org/core http://cxf.apache.org/schemas/core.xsd">
 
-    <jaxrs:server id="userResource" address="/Users">
+    <jaxrs:server id="userResource" address="/v2/Users">
         <jaxrs:serviceBeans>
             <ref bean="userBean"/>
         </jaxrs:serviceBeans>
-
-        <jaxrs:providers>
-            <ref bean="authenticationFilter"/>
-        </jaxrs:providers>
 
     </jaxrs:server>
 
     <bean id="userBean" class="org.wso2.carbon.identity.scim.provider.resources.UserResource"/>
 
-    <jaxrs:server id="groupResource" address="/Groups">
+    <jaxrs:server id="serviceProviderConfigResource" address="/v2/ServiceProviderConfig">
         <jaxrs:serviceBeans>
-            <ref bean="groupBean"/>
+            <ref bean="serviceProviderConfigBean"/>
         </jaxrs:serviceBeans>
 
-        <jaxrs:providers>
-            <ref bean="authenticationFilter"/>
-        </jaxrs:providers>
     </jaxrs:server>
 
-    <bean id="groupBean" class="org.wso2.carbon.identity.scim.provider.resources.GroupResource"/>
-
-    <jaxrs:server id="bulkResource" address="/Bulk">
-        <jaxrs:serviceBeans>
-            <ref bean="bulkBean"/>
-        </jaxrs:serviceBeans>
-
-        <jaxrs:providers>
-            <ref bean="authenticationFilter"/>
-        </jaxrs:providers>
-        
-    </jaxrs:server>
-
-    <bean id="bulkBean" class="org.wso2.carbon.identity.scim.provider.resources.BulkResource"/>
-
-    <bean id="authenticationFilter" class="org.wso2.carbon.identity.scim.provider.filter.AuthenticationFilter">
-            <!-- authorization bean properties -->
-        </bean>
-
-    <bean id="ClearThreadLocalInterceptor" class="org.wso2.carbon.identity.scim.provider.util.ClearThreadLocalInterceptor"/>
-
-    <cxf:bus>
-        <cxf:inInterceptors>
-            <ref bean="ClearThreadLocalInterceptor"/>
-        </cxf:inInterceptors>
-    </cxf:bus>
+    <bean id="serviceProviderConfigBean" class="org.wso2.carbon.identity.scim.provider.resources.ServiceProviderConfig"/>
 
 </beans>
 

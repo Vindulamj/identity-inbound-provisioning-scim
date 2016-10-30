@@ -22,7 +22,7 @@
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.1.5-SNAPSHOT</version>
+        <version>5.1.2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -37,10 +37,6 @@
             <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
             <artifactId>org.wso2.carbon.identity.scim.provider</artifactId>
             <type>war</type>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.charon</groupId>
-            <artifactId>org.wso2.charon.core</artifactId>
         </dependency>
     </dependencies>
 
@@ -126,9 +122,7 @@
                                     <propertyDef>org.eclipse.equinox.p2.type.group:false</propertyDef>
                                 </properties>
                             </adviceFile>
-                            <bundles>
-                                <bundleDef>org.wso2.charon:org.wso2.charon.core</bundleDef>
-                            </bundles>
+                            <bundles></bundles>
                             <importFeatures>
                                 <importFeatureDef>org.wso2.carbon.claim.mgt.server:compatible:${identity.framework.version}</importFeatureDef>
                                 <importFeatureDef>org.wso2.carbon.identity.scim.common:compatible:${project.version}</importFeatureDef>

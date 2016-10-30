@@ -20,6 +20,7 @@
             <Property name="password">admin</Property>
             <Property name="userEndpoint">https://localhost:9444/wso2/scim/Users</Property>
             <Property name="groupEndpoint">https://localhost:9444/wso2/scim/Groups</Property>
+            <Property name="groupEndpoint">https://localhost:9444/wso2/scim/ServiceProviderConfig</Property>
         </scim-provider>
     </scim-providers>
     <scim-consumers>

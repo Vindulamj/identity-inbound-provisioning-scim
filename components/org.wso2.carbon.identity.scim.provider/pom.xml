@@ -22,7 +22,7 @@
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.1.5-SNAPSHOT</version>
+        <version>5.1.2</version>
     </parent>
 
     <artifactId>org.wso2.carbon.identity.scim.provider</artifactId>
@@ -38,16 +38,6 @@
         <dependency>
             <groupId>org.apache.cxf.wso2</groupId>
             <artifactId>cxf-bundle</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.charon</groupId>
-            <artifactId>org.wso2.charon.core</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.wso2.carbon</groupId>
-            <artifactId>org.wso2.carbon.user.core</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -79,6 +69,13 @@
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.provisioning</artifactId>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>Charon</groupId>
+            <artifactId>org.charon</artifactId>
+            <version>3.0.0</version>
+            <scope>system</scope>
+            <systemPath>/home/vindula/Desktop/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
         </dependency>
     </dependencies>
 
