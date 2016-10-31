@@ -36,7 +36,6 @@ import org.wso2.charon.core.v2.objects.SCIMObject;
 import org.wso2.charon.core.v2.objects.User;
 import org.wso2.charon.core.v2.schema.*;
 import org.wso2.charon.core.v2.utils.AttributeUtil;
-import sun.java2d.pipe.SpanShapeRenderer;
 
 
 import java.util.Arrays;
@@ -56,9 +55,6 @@ public class AttributeMapper {
 
     /**
      * Return claims as a map of <ClaimUri (which is mapped to SCIM attribute uri),ClaimValue>
-     * TODO : This method should be broken into smaller methods for code reuse
-     * TODO : This method SHOULD be recoded. MUST implement loops
-     *
      * @param scimObject
      * @return
      */
@@ -72,55 +68,13 @@ public class AttributeMapper {
                 continue;
             }
             if (attribute instanceof SimpleAttribute) {
-                String attributeURI = attribute.getURI();
-                if (((SimpleAttribute) attribute).getValue() != null) {
-                    String attributeValue = String.valueOf(((SimpleAttribute) attribute).getValue());
-                    // set attribute URI as the claim URI
-                    claimsMap.put(attributeURI, attributeValue);
-                }
-            } else if (attribute instanceof MultiValuedAttribute) {
-                MultiValuedAttribute multiValAttribute = (MultiValuedAttribute) attribute;
-                // get the URI of root attribute
-                String attributeURI = multiValAttribute.getURI();
-                // check if values are set as simple attributes
-                List<Object> attributeValues = multiValAttribute.getAttributePrimitiveValues();
-                if (CollectionUtils.isNotEmpty(attributeValues)) {
-                    String values = null;
-                    for (Object attributeValue : attributeValues) {
-                        if (values != null) {
-                            values += attributeValue + ",";
-                        } else {
-                            values = attributeValue + ",";
-                        }
-                    }
-                    claimsMap.put(attributeURI, values);
-                }
-                // check if values are set as complex values
-                // NOTE: in carbon, we only support storing of type and value of
-                // a multi-valued attribute
-                List<Attribute> complexAttributeList = multiValAttribute.getAttributeValues();
-                for (Attribute complexAttribute : complexAttributeList) {
-                    Map<String, Attribute> subAttributes =
-                            ((ComplexAttribute) complexAttribute).getSubAttributesList();
-                    SimpleAttribute typeAttribute =
-                            (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.TYPE);
-                    String valueAttriubuteURI;
-                    // construct attribute URI
-                    if (typeAttribute != null) {
-                        String typeValue = (String) typeAttribute.getValue();
-                        valueAttriubuteURI = attributeURI + "." + typeValue;
-                    } else {
-                        valueAttriubuteURI = attributeURI;
-                    }
-                    SimpleAttribute valueAttribute =
-                            (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
-                    if (valueAttribute != null && valueAttribute.getValue() != null) {
-                        // put it in claims
-                        claimsMap.put(valueAttriubuteURI,String.valueOf(valueAttribute.getStringValue()));
+                setClaimsForSimpleAttribute(attribute, claimsMap);
 
-                    }
-                }
-            } else if (attribute instanceof ComplexAttribute) {
+            } else if (attribute instanceof MultiValuedAttribute) {
+                setClaimsForMultivaluedAttribute(attribute, claimsMap);
+            }
+            else if (attribute instanceof ComplexAttribute) {
+                // NOTE: in carbon, we only support storing of type and value of a complex multi-valued attribute
                 // reading attributes list of the complex attribute
                 ComplexAttribute complexAttribute = (ComplexAttribute) attribute;
                 Map<String, Attribute> attributes = null;
@@ -132,79 +86,102 @@ public class AttributeMapper {
                     for (Attribute entry : attributes.values()) {
                         // if the attribute a simple attribute
                         if (entry instanceof SimpleAttribute) {
-                            SimpleAttribute simpleAttribute = (SimpleAttribute) entry;
-                            if (simpleAttribute != null && simpleAttribute.getValue() != null) {
-                                claimsMap.put(entry.getURI(), String.valueOf(simpleAttribute.getValue()));
-                            }
-                        } else if (entry instanceof MultiValuedAttribute) {
-                            MultiValuedAttribute multiValAttribute = (MultiValuedAttribute) entry;
-                            // get the URI of root attribute
-                            String attributeURI = multiValAttribute.getURI();
-                            // check if values are set as simple attributes
-                            List<Object> attributeValues = multiValAttribute.getAttributePrimitiveValues();
-                            if (CollectionUtils.isNotEmpty(attributeValues)) {
-                                String values = null;
-                                for (Object attributeValue : attributeValues) {
-                                    if (values != null) {
-                                        values += attributeValue + ",";
-                                    } else {
-                                        values = attributeValue + ",";
-                                    }
-                                }
-                                claimsMap.put(attributeURI, values);
-                            }
-                            // check if values are set as complex values
-                            // NOTE: in carbon, we only support storing of type and
-                            // value of a multi-valued attribute
-                            List<Attribute> complexAttributeList = multiValAttribute.getAttributeValues();
-                            for (Attribute complexAttrib : complexAttributeList) {
-                                Map<String, Attribute> subAttributes =
-                                        ((ComplexAttribute) complexAttrib).getSubAttributesList();
-                                SimpleAttribute typeAttribute =
-                                        (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.TYPE);
-                                String valueAttriubuteURI;
-                                // construct attribute URI
-                                if (typeAttribute != null) {
-                                    String typeValue = (String) typeAttribute.getValue();
-                                    valueAttriubuteURI = attributeURI + "." + typeValue;
-                                } else {
-                                    valueAttriubuteURI = attributeURI;
-                                }
-                                SimpleAttribute valueAttribute =
-                                        (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
-                                if (valueAttribute != null && valueAttribute.getValue() != null) {
-                                    // put it in claims
-                                    claimsMap.put(valueAttriubuteURI,String.valueOf(valueAttribute.getValue()));
+                            setClaimsForSimpleAttribute(entry, claimsMap);
 
-                                }
-                            }
+                        } else if (entry instanceof MultiValuedAttribute) {
+                            setClaimsForMultivaluedAttribute(entry, claimsMap);
 
                         } else if (entry instanceof ComplexAttribute) {
-                            // reading attributes list of the complex attribute
-                            ComplexAttribute entryOfComplexAttribute = (ComplexAttribute) entry;
-                            Map<String, Attribute> entryAttributes = null;
-                            if (entryOfComplexAttribute.getSubAttributesList() != null &&
-                                    MapUtils.isNotEmpty(entryOfComplexAttribute.getSubAttributesList())) {
-                                entryAttributes = entryOfComplexAttribute.getSubAttributesList();
-                            } else if (entryOfComplexAttribute.getSubAttributesList() != null &&
-                                    MapUtils.isNotEmpty(entryOfComplexAttribute.getSubAttributesList())) {
-                                entryAttributes = entryOfComplexAttribute.getSubAttributesList();
-                            }
-                            for (Attribute subEntry : entryAttributes.values()) {
-                                // if the attribute a simple attribute
-                                if (subEntry instanceof SimpleAttribute) {
-                                    SimpleAttribute simpleAttribute = (SimpleAttribute) subEntry;
-                                    if (simpleAttribute != null && simpleAttribute.getValue() != null) {
-                                        claimsMap.put(subEntry.getURI(), String.valueOf(simpleAttribute.getValue()));
-                                    }
-                                }
-                            }
+                            setClaimsForComplexAttribute(entry, claimsMap);
                         }
                     }
                 }
             }
         }
         return claimsMap;
+    }
+
+    /**
+     * set claim mapping for simple attribute
+     * @param attribute
+     * @param claimsMap
+     */
+    private static void setClaimsForSimpleAttribute(Attribute attribute, Map<String, String> claimsMap){
+        String attributeURI = attribute.getURI();
+        if (((SimpleAttribute) attribute).getValue() != null) {
+            String attributeValue = String.valueOf(((SimpleAttribute) attribute).getValue());
+            // set attribute URI as the claim URI
+            claimsMap.put(attributeURI, attributeValue);
+        }
+    }
+
+    /**
+     * set claim mapping for multivalued attribute
+     * @param attribute
+     * @param claimsMap
+     */
+    private static void setClaimsForMultivaluedAttribute(Attribute attribute, Map<String, String> claimsMap){
+        MultiValuedAttribute multiValAttribute = (MultiValuedAttribute) attribute;
+        // get the URI of root attribute
+        String attributeURI = multiValAttribute.getURI();
+        // check if values are set as primitive values
+        List<Object> attributeValues = multiValAttribute.getAttributePrimitiveValues();
+        if (CollectionUtils.isNotEmpty(attributeValues)) {
+            String values = null;
+            for (Object attributeValue : attributeValues) {
+                if (values != null) {
+                    values += attributeValue + ",";
+                } else {
+                    values = attributeValue + ",";
+                }
+            }
+            claimsMap.put(attributeURI, values);
+        }
+
+        // check if values are set as complex values
+        // NOTE: in carbon, we only support storing of type and
+        // value of a multi-valued attribute
+        List<Attribute> complexAttributeList = multiValAttribute.getAttributeValues();
+        for (Attribute complexAttrib : complexAttributeList) {
+            Map<String, Attribute> subAttributes =
+                    ((ComplexAttribute) complexAttrib).getSubAttributesList();
+            SimpleAttribute typeAttribute =
+                    (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.TYPE);
+            String valueAttriubuteURI;
+            // construct attribute URI
+            if (typeAttribute != null) {
+                String typeValue = (String) typeAttribute.getValue();
+                valueAttriubuteURI = attributeURI + "." + typeValue;
+            } else {
+                valueAttriubuteURI = attributeURI;
+            }
+            SimpleAttribute valueAttribute =
+                    (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
+            if (valueAttribute != null && valueAttribute.getValue() != null) {
+                // put it in claims
+                claimsMap.put(valueAttriubuteURI,String.valueOf(valueAttribute.getValue()));
+
+            }
+        }
+    }
+
+    /**
+     * set claim mapping for complex attribute
+     * @param entry
+     * @param claimsMap
+     */
+    private static void setClaimsForComplexAttribute(Attribute entry, Map<String, String> claimsMap){
+        // reading attributes list of the complex attribute
+        ComplexAttribute entryOfComplexAttribute = (ComplexAttribute) entry;
+        Map<String, Attribute> entryAttributes = null;
+        if (entryOfComplexAttribute.getSubAttributesList() != null &&
+                MapUtils.isNotEmpty(entryOfComplexAttribute.getSubAttributesList())) {
+            entryAttributes = entryOfComplexAttribute.getSubAttributesList();
+        }
+        for (Attribute subEntry : entryAttributes.values()) {
+            // attribute can only be simple attribute and that also in the extension schema only
+            setClaimsForSimpleAttribute(subEntry, claimsMap);
+        }
     }
 
 
