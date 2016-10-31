@@ -21,32 +21,22 @@ package org.wso2.carbon.identity.scim.provider.impl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
-import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ProvisioningServiceProviderType;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.application.common.model.ThreadLocalProvisioningServiceProvider;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
-import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.provisioning.IdentityProvisioningException;
-import org.wso2.carbon.identity.provisioning.OutboundProvisioningManager;
-import org.wso2.carbon.identity.provisioning.ProvisioningEntity;
-import org.wso2.carbon.identity.provisioning.ProvisioningOperation;
-import org.wso2.carbon.identity.provisioning.listener.DefaultInboundUserProvisioningListener;
 import org.wso2.carbon.identity.scim.common.utils.AttributeMapper;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
-import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
+import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.user.api.ClaimMapping;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.claim.ClaimManager;
-import org.wso2.carbon.user.core.util.UserCoreUtil;
-import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+import org.wso2.charon.core.v2.attributes.Attribute;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 import org.wso2.charon.core.v2.exceptions.BadRequestException;
 import org.wso2.charon.core.v2.exceptions.CharonException;
@@ -100,24 +90,119 @@ public class SCIMUserManager implements UserManager {
             errMsg += e.getMessage();
             throw new CharonException(errMsg, e);
         }
+
         return user;
 
     }
 
     @Override
     public User getUser(String userId) throws CharonException {
-        return  null;
+      return null;
     }
 
     @Override
-    public void deleteUser(String s) throws NotFoundException, CharonException {
+    public void deleteUser(String userId) throws NotFoundException, CharonException {
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting user: " + userId);
+        }
+        //get the user name of the user with this id
+        String[] userNames = null;
+        String userName = null;
+        try {
+
+            String userStoreDomainFromSP = null;
+            try {
+                userStoreDomainFromSP = getUserStoreDomainFromSP();
+            } catch (IdentityApplicationManagementException e) {
+                throw new CharonException("Error retrieving User Store name. ", e);
+            }
+            if (userNames == null || userNames.length == 0) {
+                //resource with given id not found
+                if (log.isDebugEnabled()) {
+                    log.debug("User with id: " + userId + " not found.");
+                }
+                throw new NotFoundException();
+            } else if (userStoreDomainFromSP != null &&
+                    !(userStoreDomainFromSP
+                            .equalsIgnoreCase(IdentityUtil.extractDomainFromName(userNames[0])))) {
+                throw new CharonException("User :" + userNames[0] + "is not belong to user store " +
+                        userStoreDomainFromSP + "Hence user updating fail");
+            } else {
+                //we assume (since id is unique per user) only one user exists for a given id
+                userName = userNames[0];
+                carbonUM.deleteUser(userName);
+                log.info("User: " + userName + " is deleted through SCIM.");
+            }
+
+        } catch (org.wso2.carbon.user.core.UserStoreException e) {
+            throw new CharonException("Error in deleting user: " + userName, e);
+        }
 
     }
 
     @Override
     public List<User> listUsers() throws CharonException {
-        return null;
+
+        ClaimMapping[] coreClaims;
+        ClaimMapping[] userClaims;
+        List<User> users = new ArrayList<>();
+        try {
+            String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, "*", null);
+            if (userNames != null && userNames.length != 0) {
+                //get Claims related to SCIM claim dialect
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                List<String> claimURIList = new ArrayList<>();
+                for (ClaimMapping claim : coreClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (ClaimMapping claim : userClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (String userName : userNames) {
+                    if (userName.contains(UserCoreConstants.NAME_COMBINER)) {
+                        userName = userName.split("\\" + UserCoreConstants.NAME_COMBINER)[0];
+                    }
+                    User scimUser = this.getSCIMMetaUser(userName);
+                    if (scimUser != null) {
+                        Map<String, Attribute> attrMap = scimUser.getAttributeList();
+                        if (attrMap != null && !attrMap.isEmpty()) {
+                            users.add(scimUser);
+                        }
+                    }
+                }
+            }
+        } catch (UserStoreException e) {
+            throw new CharonException("Error while retrieving users from user store..", e);
+        } catch (BadRequestException e) {
+
+        }
+        return users;
     }
+
+    private User getSCIMMetaUser(String userName) throws BadRequestException {
+
+        List<String> claimURIList = new ArrayList<>();
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.ID_URI);
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.LOCATION_URI);
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.CREATED_URI);
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.LAST_MODIFIED_URI);
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.RESOURCE_TYPE_URI);
+        claimURIList.add(SCIMConstants.CommonSchemaConstants.VERSION_URI);
+        User scimUser = null;
+
+        try {
+            Map<String, String> attributes = carbonUM.getUserClaimValues(
+                    userName, claimURIList.toArray(new String[claimURIList.size()]), null);
+            attributes.put(SCIMConstants.UserSchemaConstants.USER_NAME_URI, userName);
+            scimUser = (User) AttributeMapper.constructSCIMObjectFromAttributes(attributes, 1);
+        } catch (UserStoreException | CharonException | NotFoundException e) {
+            log.error("Error in getting user information from Carbon User Store for " +
+                    "user: " + userName + " ", e);
+        }
+        return scimUser;
+    }
+
 
     @Override
     public List<User> listUsersWithPagination(int i, int i1) {
@@ -189,6 +274,28 @@ public class SCIMUserManager implements UserManager {
         return null;
     }
 
+
+    private String getUserStoreDomainFromSP() throws IdentityApplicationManagementException {
+
+        ThreadLocalProvisioningServiceProvider threadLocalSP = IdentityApplicationManagementUtil
+                .getThreadLocalProvisioningServiceProvider();
+        ServiceProvider serviceProvider = null;
+        if (threadLocalSP.getServiceProviderType() == ProvisioningServiceProviderType.OAUTH) {
+            serviceProvider = ApplicationManagementService.getInstance()
+                    .getServiceProviderByClientId(
+                            threadLocalSP.getServiceProviderName(),
+                            "oauth2", threadLocalSP.getTenantDomain());
+        } else {
+            serviceProvider = ApplicationManagementService.getInstance().getServiceProvider(
+                    threadLocalSP.getServiceProviderName(), threadLocalSP.getTenantDomain());
+        }
+
+        if (serviceProvider != null && serviceProvider.getInboundProvisioningConfig() != null &&
+                !StringUtils.isBlank(serviceProvider.getInboundProvisioningConfig().getProvisioningUserStore())) {
+            return serviceProvider.getInboundProvisioningConfig().getProvisioningUserStore();
+        }
+        return null;
+    }
 
 }
 

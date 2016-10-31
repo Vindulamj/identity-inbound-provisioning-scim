@@ -27,6 +27,10 @@ public class SCIMProviderConstants {
     public static final String APPLICATION_SCIM_JSON = "application/scim+json";
     public static final String APPLICATION__JSON = "application/json";
     public static final String ACCEPT_HEADER = "Accept";
+    public static final String ID = "id";
+    public static final String SCIM_CORE_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0";
+    public static final String SCIM_USER_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0:User";
+
 
     //ServiceProviderConfig endpoint related constants
 

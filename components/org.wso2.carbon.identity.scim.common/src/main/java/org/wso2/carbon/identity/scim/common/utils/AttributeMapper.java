@@ -37,7 +37,6 @@ import org.wso2.charon.core.v2.objects.User;
 import org.wso2.charon.core.v2.schema.*;
 import org.wso2.charon.core.v2.utils.AttributeUtil;
 
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -106,10 +105,11 @@ public class AttributeMapper {
      * @param attribute
      * @param claimsMap
      */
-    private static void setClaimsForSimpleAttribute(Attribute attribute, Map<String, String> claimsMap){
+    private static void setClaimsForSimpleAttribute(Attribute attribute, Map<String, String> claimsMap) throws CharonException {
         String attributeURI = attribute.getURI();
         if (((SimpleAttribute) attribute).getValue() != null) {
-            String attributeValue = String.valueOf(((SimpleAttribute) attribute).getValue());
+            String attributeValue = AttributeUtil.getStringValueOfAttribute(
+                    ((SimpleAttribute) attribute).getValue(), attribute.getType());
             // set attribute URI as the claim URI
             claimsMap.put(attributeURI, attributeValue);
         }
@@ -120,7 +120,7 @@ public class AttributeMapper {
      * @param attribute
      * @param claimsMap
      */
-    private static void setClaimsForMultivaluedAttribute(Attribute attribute, Map<String, String> claimsMap){
+    private static void setClaimsForMultivaluedAttribute(Attribute attribute, Map<String, String> claimsMap) throws CharonException {
         MultiValuedAttribute multiValAttribute = (MultiValuedAttribute) attribute;
         // get the URI of root attribute
         String attributeURI = multiValAttribute.getURI();
@@ -159,7 +159,8 @@ public class AttributeMapper {
                     (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
             if (valueAttribute != null && valueAttribute.getValue() != null) {
                 // put it in claims
-                claimsMap.put(valueAttriubuteURI,String.valueOf(valueAttribute.getValue()));
+                claimsMap.put(valueAttriubuteURI,
+                        AttributeUtil.getStringValueOfAttribute(valueAttribute.getValue(),valueAttribute.getType()));
 
             }
         }
@@ -170,7 +171,7 @@ public class AttributeMapper {
      * @param entry
      * @param claimsMap
      */
-    private static void setClaimsForComplexAttribute(Attribute entry, Map<String, String> claimsMap){
+    private static void setClaimsForComplexAttribute(Attribute entry, Map<String, String> claimsMap) throws CharonException {
         // reading attributes list of the complex attribute
         ComplexAttribute entryOfComplexAttribute = (ComplexAttribute) entry;
         Map<String, Attribute> entryAttributes = null;
@@ -210,8 +211,8 @@ public class AttributeMapper {
         }
         for (Map.Entry<String, String> attributeEntry : attributes.entrySet()) {
 
-            if (debug) {
-                log.debug("AttributeKey: " + attributeEntry.getKey() + " AttributeValue:" +
+            if(debug) {
+                log.info("AttributeKey: " + attributeEntry.getKey() + " AttributeValue:" +
                         attributeEntry.getValue());
             }
 
@@ -243,7 +244,6 @@ public class AttributeMapper {
                         //convert attribute to relevant type
                         Object attributeValueObject = AttributeUtil.getAttributeValueFromString(
                                 attributeEntry.getValue(), attributeSchema.getType());
-
                         //create attribute
                         SimpleAttribute simpleAttribute = new SimpleAttribute(attributeNames[0],
                                 attributeValueObject);

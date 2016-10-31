@@ -24,13 +24,18 @@ import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
+import org.wso2.charon.core.v2.exceptions.BadRequestException;
 import org.wso2.charon.core.v2.exceptions.CharonException;
 import org.wso2.charon.core.v2.exceptions.FormatNotSupportedException;
 import org.wso2.charon.core.v2.extensions.UserManager;
+import org.wso2.charon.core.v2.protocol.ResponseCodeConstants;
 import org.wso2.charon.core.v2.protocol.SCIMResponse;
+import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon.core.v2.protocol.endpoints.UserResourceManager;
+import org.wso2.charon.core.v2.schema.SCIMConstants;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Path("/")
@@ -84,6 +89,98 @@ public class UserResource extends AbstractResource {
             return handleCharonException(e, encoder);
         } catch (FormatNotSupportedException e) {
             return handleFormatNotSupportedException(e);
+        }
+    }
+
+    @DELETE
+    @Path("{id}")
+    public Response deleteUser(@PathParam(SCIMProviderConstants.ID) String id,
+                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
+                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+
+        JSONEncoder encoder = null;
+        try {
+            IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
+
+            // defaults to application/scim+json.
+            if (format == null) {
+                format = SCIMProviderConstants.APPLICATION_SCIM_JSON;
+            }
+            if(!isValidOutputFormat(format)){
+                String error = format + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+            // obtain the encoder at this layer in case exceptions needs to be encoded.
+            encoder = identitySCIMManager.getEncoder();
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+
+            // create charon-SCIM user resource manager and hand-over the request.
+            UserResourceManager userResourceManager = new UserResourceManager();
+
+            SCIMResponse scimResponse = userResourceManager.delete(id, userManager);
+            // needs to check the code of the response and return 200 0k or other error codes
+            // appropriately.
+            return new SupportUtils().buildResponse(scimResponse);
+
+        } catch (CharonException e) {
+            return handleCharonException(e, encoder);
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
+                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                            @QueryParam("attributes") String searchAttribute, @QueryParam("filter") String filter,
+                            @QueryParam("startIndex") String startIndex, @QueryParam("count") String count,
+                            @QueryParam("sortBy") String sortBy, @QueryParam("sortOrder") String sortOrder) {
+
+        JSONEncoder encoder = null;
+        try {
+            IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
+
+            // defaults to application/scim+json.
+            if (format == null) {
+                format = SCIMProviderConstants.APPLICATION_SCIM_JSON;
+            }
+            if(!isValidOutputFormat(format)){
+                String error = format + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+            // obtain the encoder at this layer in case exceptions needs to be encoded.
+            encoder = identitySCIMManager.getEncoder();
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+
+            // create charon-SCIM user resource manager and hand-over the request.
+            UserResourceManager userResourceManager = new UserResourceManager();
+
+            SCIMResponse scimResponse = null;
+            if (filter != null) {
+                scimResponse = userResourceManager.listByFilter(filter, userManager, null, null);
+            } else if (searchAttribute == null && filter == null && startIndex == null
+                    && count == null && sortBy == null) {
+                scimResponse = userResourceManager.list(userManager, null, null);
+                logger.info(scimResponse.getResponseMessage());
+            } else {
+                throw new BadRequestException(ResponseCodeConstants.INVALID_PATH);
+            }
+            return new SupportUtils().buildResponse(scimResponse);
+
+        } catch (CharonException e) {
+            return handleCharonException(e, encoder);
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        } catch (BadRequestException e) {
+            if (logger.isDebugEnabled()) {
+                logger.debug(e.getMessage(), e);
+            }
+            return new SupportUtils().buildResponse(AbstractResourceManager.encodeSCIMException(e));
         }
     }
 }
