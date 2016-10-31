@@ -23,5 +23,9 @@ package org.wso2.carbon.identity.scim.common.utils;
  */
 public class SCIMCommonConstants {
 
+    public static final String USERS = "Users";
+    public static final String GROUPS = "Groups";
+    public static final String SERVICE_PROVIDER_CONFIG = "ServiceProviderConfig";
+
 }
 
