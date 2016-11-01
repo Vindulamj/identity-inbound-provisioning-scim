@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
@@ -135,9 +136,13 @@ public class UserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
-                            @QueryParam("attributes") String searchAttribute, @QueryParam("filter") String filter,
-                            @QueryParam("startIndex") String startIndex, @QueryParam("count") String count,
-                            @QueryParam("sortBy") String sortBy, @QueryParam("sortOrder") String sortOrder) {
+                            @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
+                            @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                            @QueryParam (SCIMProviderConstants.FILTER) String filter,
+                            @QueryParam (SCIMProviderConstants.START_INDEX) int startIndex,
+                            @QueryParam (SCIMProviderConstants.COUNT) int count,
+                            @QueryParam (SCIMProviderConstants.SORT_BY) String sortBy,
+                            @QueryParam (SCIMProviderConstants.SORT_ORDER) String sortOrder) {
 
         JSONEncoder encoder = null;
         try {
@@ -162,25 +167,19 @@ public class UserResource extends AbstractResource {
 
             SCIMResponse scimResponse = null;
             if (filter != null) {
-                scimResponse = userResourceManager.listByFilter(filter, userManager, null, null);
-            } else if (searchAttribute == null && filter == null && startIndex == null
-                    && count == null && sortBy == null) {
-                scimResponse = userResourceManager.list(userManager, null, null);
-                logger.info(scimResponse.getResponseMessage());
-            } else {
-                throw new BadRequestException(ResponseCodeConstants.INVALID_PATH);
+                scimResponse = userResourceManager.listByFilter(filter, userManager, attribute, excludedAttributes);
+            } else if ( filter == null && startIndex == 0 && count == 0 && sortBy == null) {
+                scimResponse = userResourceManager.list(userManager, attribute, excludedAttributes);
+            } else if (sortBy != null || sortOrder != null){
+                scimResponse = userResourceManager.listBySort(sortBy, sortOrder, userManager, attribute, excludedAttributes);
+            } else if(startIndex != 0 || count != 0) {
+                scimResponse = userResourceManager.listWithPagination(startIndex, count, userManager, attribute, excludedAttributes);
             }
             return new SupportUtils().buildResponse(scimResponse);
-
         } catch (CharonException e) {
             return handleCharonException(e, encoder);
         } catch (FormatNotSupportedException e) {
             return handleFormatNotSupportedException(e);
-        } catch (BadRequestException e) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(e.getMessage(), e);
-            }
-            return new SupportUtils().buildResponse(AbstractResourceManager.encodeSCIMException(e));
         }
     }
 }

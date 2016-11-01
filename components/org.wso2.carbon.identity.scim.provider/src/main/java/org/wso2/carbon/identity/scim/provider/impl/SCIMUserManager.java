@@ -163,7 +163,7 @@ public class SCIMUserManager implements UserManager {
                     if (userName.contains(UserCoreConstants.NAME_COMBINER)) {
                         userName = userName.split("\\" + UserCoreConstants.NAME_COMBINER)[0];
                     }
-                    User scimUser = this.getSCIMMetaUser(userName);
+                    User scimUser = this.getSCIMMetaUser(userName, claimURIList);
                     if (scimUser != null) {
                         Map<String, Attribute> attrMap = scimUser.getAttributeList();
                         if (attrMap != null && !attrMap.isEmpty()) {
@@ -180,15 +180,7 @@ public class SCIMUserManager implements UserManager {
         return users;
     }
 
-    private User getSCIMMetaUser(String userName) throws BadRequestException {
-
-        List<String> claimURIList = new ArrayList<>();
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.ID_URI);
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.LOCATION_URI);
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.CREATED_URI);
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.LAST_MODIFIED_URI);
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.RESOURCE_TYPE_URI);
-        claimURIList.add(SCIMConstants.CommonSchemaConstants.VERSION_URI);
+    private User getSCIMMetaUser(String userName, List<String> claimURIList) throws BadRequestException {
         User scimUser = null;
 
         try {
