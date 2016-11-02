@@ -85,4 +85,37 @@ public class SCIMCommonUtils {
         return scimServiceProviderConfig;
     }
 
+    public static String getGroupNameWithDomain(String groupName) {
+
+        if (groupName == null) {
+            return groupName;
+        }
+
+        if (groupName.indexOf(CarbonConstants.DOMAIN_SEPARATOR) > 0) {
+            return groupName;
+        } else {
+            return UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME
+                    + CarbonConstants.DOMAIN_SEPARATOR + groupName;
+        }
+    }
+
+    public static String getPrimaryFreeGroupName(String groupName) {
+
+        if (groupName == null) {
+            return groupName;
+        }
+
+        int index = groupName.indexOf(CarbonConstants.DOMAIN_SEPARATOR);
+
+        // Check whether we have a secondary UserStoreManager setup.
+        if (index > 0) {
+            // Using the short-circuit. User name comes with the domain name.
+            String domain = groupName.substring(0, index);
+            if (UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME.equals(domain)) {
+                return groupName.substring(index + 1);
+            }
+        }
+        return groupName;
+    }
+
 }

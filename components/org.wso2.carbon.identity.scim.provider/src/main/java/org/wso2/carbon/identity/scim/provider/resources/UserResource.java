@@ -169,11 +169,14 @@ public class UserResource extends AbstractResource {
             if (filter != null) {
                 scimResponse = userResourceManager.listByFilter(filter, userManager, attribute, excludedAttributes);
             } else if ( filter == null && startIndex == 0 && count == 0 && sortBy == null) {
-                scimResponse = userResourceManager.list(userManager, attribute, excludedAttributes);
+                scimResponse = userResourceManager.list
+                        (userManager, attribute, excludedAttributes);
             } else if (sortBy != null || sortOrder != null){
-                scimResponse = userResourceManager.listBySort(sortBy, sortOrder, userManager, attribute, excludedAttributes);
+                scimResponse = userResourceManager.listBySort
+                        (sortBy, sortOrder, userManager, attribute, excludedAttributes);
             } else if(startIndex != 0 || count != 0) {
-                scimResponse = userResourceManager.listWithPagination(startIndex, count, userManager, attribute, excludedAttributes);
+                scimResponse = userResourceManager.listWithPagination
+                        (startIndex, count, userManager, attribute, excludedAttributes);
             }
             return new SupportUtils().buildResponse(scimResponse);
         } catch (CharonException e) {
