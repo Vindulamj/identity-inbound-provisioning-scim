@@ -173,6 +173,7 @@ public class AttributeMapper {
      * @param claimsMap
      */
     private static void setClaimsForComplexAttribute(Attribute entry, Map<String, String> claimsMap) throws CharonException {
+
         // reading attributes list of the complex attribute
         ComplexAttribute entryOfComplexAttribute = (ComplexAttribute) entry;
         Map<String, Attribute> entryAttributes = null;
@@ -186,14 +187,6 @@ public class AttributeMapper {
         }
     }
 
-    public static void main(String [] args) throws NotFoundException, BadRequestException, CharonException {
-        Map<String,String> map = new HashMap<String, String>() ;
-        map.put("urn:ietf:params:scim:schemas:core:2.0:User:emails.home","vindulamj@gmail.com");
-        SCIMObject s =constructSCIMObjectFromAttributes(map,1);
-        System.out.println(s.getAttributeList().size());
-        List<Attribute> list = (((MultiValuedAttribute)(s.getAttributeList().get("emails"))).getAttributeValues());
-        System.out.println(((SimpleAttribute)(((ComplexAttribute)(list.get(0))).getSubAttribute("value"))).getValue());
-    }
 
     /**
      * Construct the SCIM Object given the attribute URIs and attribute values of the object.
@@ -467,7 +460,7 @@ public class AttributeMapper {
                         for (AttributeSchema subAttributeSchema : subAttributeSchemaList) {
                             if (subAttributeSchema.getType().equals(SCIMDefinitions.DataType.COMPLEX)) {
                                 // this is only valid for extension schema
-                                List<SCIMAttributeSchema> subSubAttributeSchemaList = attributeSchema.getSubAttributeSchemas();
+                                List<SCIMAttributeSchema> subSubAttributeSchemaList = subAttributeSchema.getSubAttributeSchemas();
                                 for (AttributeSchema subSubAttributeSchema : subSubAttributeSchemaList) {
                                     if (attributeURI.equals(subSubAttributeSchema.getURI())) {
                                         return subSubAttributeSchema;

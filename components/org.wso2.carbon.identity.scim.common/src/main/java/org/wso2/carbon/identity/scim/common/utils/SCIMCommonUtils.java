@@ -34,6 +34,25 @@ public class SCIMCommonUtils {
     private static String scimUserLocation;
     private static String scimServiceProviderConfig;
 
+    /**
+     * Since we need perform provisioning through UserOperationEventListener implementation -
+     *
+     * SCIMUserOperationListener- there can be cases where multiple methods in the listener are
+     * called for same operation - such as when adding a user with claims, both postAddUserListener
+     * as well as setClaimValuesListener are called. But we do not need setClaimValuesLister to be
+     * called at user creation - it is supposed to do provisioning at user update. So we make use of
+     * this thread local variable to skip the second lister.
+     */
+    private static ThreadLocal threadLocalToSkipSetUserClaimsListeners = new ThreadLocal();
+    /**
+     * Provisioning to other providers is initiated at SCIMUserOperationListener which is invoked
+     * by UserStoreManager. It doesn't have any clue about through which path the user management operation
+     * came. If it came through SCIMEndPoint, we treat it differently when deciding SCIMConsumerId.
+     * Therefore we need this thread local to signal the SCIMUserOperationListener to take the decision.
+     */
+    private static ThreadLocal threadLocalIsManagedThroughSCIMEP = new ThreadLocal();
+
+
     public static void init() {
         //to initialize scim urls once.
         if (scimUserLocation == null || scimGroupLocation == null || scimServiceProviderConfig == null) {
@@ -116,6 +135,42 @@ public class SCIMCommonUtils {
             }
         }
         return groupName;
+    }
+
+    public static void unsetThreadLocalToSkipSetUserClaimsListeners() {
+        threadLocalToSkipSetUserClaimsListeners.remove();
+    }
+
+    public static Boolean getThreadLocalToSkipSetUserClaimsListeners() {
+        return (Boolean) threadLocalToSkipSetUserClaimsListeners.get();
+    }
+
+    public static void setThreadLocalToSkipSetUserClaimsListeners(Boolean value) {
+        threadLocalToSkipSetUserClaimsListeners.set(value);
+    }
+
+    public static void unsetThreadLocalIsManagedThroughSCIMEP() {
+        threadLocalIsManagedThroughSCIMEP.remove();
+    }
+
+    public static Boolean getThreadLocalIsManagedThroughSCIMEP() {
+        return (Boolean) threadLocalIsManagedThroughSCIMEP.get();
+    }
+
+    public static void setThreadLocalIsManagedThroughSCIMEP(Boolean value) {
+        threadLocalIsManagedThroughSCIMEP.set(value);
+    }
+
+    public static String getGlobalConsumerId() {
+        return PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+    }
+
+    public static String getUserConsumerId() {
+        //String userName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = PrivilegedCarbonContext.getThreadLocalCarbonContext().getUsername();
+        String currentTenantDomain = PrivilegedCarbonContext.getThreadLocalCarbonContext().getTenantDomain();
+        String consumerId = userName + "@" + currentTenantDomain;
+        return consumerId;
     }
 
 }

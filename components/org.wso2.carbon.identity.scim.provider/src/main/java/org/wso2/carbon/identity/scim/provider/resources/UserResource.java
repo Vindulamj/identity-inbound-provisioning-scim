@@ -43,6 +43,56 @@ import javax.ws.rs.core.Response;
 public class UserResource extends AbstractResource {
     private static Log logger = LogFactory.getLog(UserResource.class);
 
+    @GET
+    @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                            @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                            @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                            @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                            @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes) {
+
+        JSONEncoder encoder = null;
+        try {
+            IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
+
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if(!isValidInputFormat(inputFormat)){
+                String error = inputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+
+            if(!isValidOutputFormat(outputFormat)){
+                String error = outputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+            // obtain the encoder at this layer in case exceptions needs to be encoded.
+            encoder = identitySCIMManager.getEncoder();
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+
+            // create charon-SCIM user endpoint and hand-over the request.
+            UserResourceManager userResourceManager = new UserResourceManager();
+
+            SCIMResponse scimResponse = userResourceManager.get(id, userManager,attribute, excludedAttributes);
+            // needs to check the code of the response and return 200 0k or other error codes
+            // appropriately.
+            return new SupportUtils().buildResponse(scimResponse);
+
+        } catch (CharonException e) {
+            return handleCharonException(e,encoder);
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+    }
 
     @POST
     public Response createUser(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,

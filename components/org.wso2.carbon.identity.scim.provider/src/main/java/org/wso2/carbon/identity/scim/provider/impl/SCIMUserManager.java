@@ -21,21 +21,24 @@ package org.wso2.carbon.identity.scim.provider.impl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
-import org.wso2.carbon.identity.application.common.model.ProvisioningServiceProviderType;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
-import org.wso2.carbon.identity.application.common.model.ThreadLocalProvisioningServiceProvider;
-import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
-import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.scim.common.group.SCIMGroupHandler;
 import org.wso2.carbon.identity.scim.common.utils.AttributeMapper;
+import org.wso2.carbon.identity.scim.common.utils.IdentitySCIMException;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
+import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.user.api.ClaimMapping;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.claim.ClaimManager;
+import org.wso2.carbon.user.core.util.UserCoreUtil;
+import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.charon.core.v2.attributes.Attribute;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 import org.wso2.charon.core.v2.exceptions.BadRequestException;
@@ -66,38 +69,124 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public User createUser(User user) throws CharonException, ConflictException, BadRequestException {
-        try{
-            Map<String, String> claimsMap = AttributeMapper.getClaimsMap(user);
+        String userStoreName = null;
 
-            /*skip groups attribute since we map groups attribute to actual groups in ldap.
+        try {
+            String userStoreDomainFromSP = getUserStoreDomainFromSP();
+            if (userStoreDomainFromSP != null) {
+                userStoreName = userStoreDomainFromSP;
+            }
+        } catch (IdentityApplicationManagementException e) {
+            throw new CharonException("Error retrieving User Store name. ", e);
+        }
+
+        StringBuilder userName = new StringBuilder();
+
+        if (StringUtils.isNotBlank(userStoreName)) {
+            // if we have set a user store under provisioning configuration - we should only use that.
+            String currentUserName = user.getUserName();
+            currentUserName = UserCoreUtil.removeDomainFromName(currentUserName);
+            user.setUserName(userName.append(userStoreName)
+                    .append(CarbonConstants.DOMAIN_SEPARATOR).append(currentUserName)
+                    .toString());
+        }
+
+        String userStoreDomainName = IdentityUtil.extractDomainFromName(user.getUserName());
+        if(StringUtils.isNotBlank(userStoreDomainName) && !isSCIMEnabled(userStoreDomainName)){
+            throw new CharonException("Cannot add user through scim to user store " + ". SCIM is not " +
+                    "enabled for user store " + userStoreDomainName);
+        }
+
+        try {
+            PrivilegedCarbonContext.startTenantFlow();
+            PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+            carbonContext.setTenantDomain(MultitenantUtils.getTenantDomain(consumerName));
+            carbonContext.getTenantId(true);
+            carbonContext.setUsername(MultitenantUtils.getTenantAwareUsername(consumerName));
+
+                //Persist in carbon user store
+                if (log.isDebugEnabled()) {
+                    log.debug("Creating user: " + user.getUserName());
+                }
+                /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+                SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+                Map<String, String> claimsMap = AttributeMapper.getClaimsMap(user);
+
+                /*skip groups attribute since we map groups attribute to actual groups in ldap.
                 and do not update it as an attribute in user schema*/
-            if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.GROUP_URI)) {
-                claimsMap.remove(SCIMConstants.UserSchemaConstants.GROUP_URI);
-            }
+                if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.GROUP_URI)) {
+                    claimsMap.remove(SCIMConstants.UserSchemaConstants.GROUP_URI);
+                }
 
-            if (carbonUM.isExistingUser(user.getUserName())) {
-                String error = "User with the name: " + user.getUserName() + " already exists in the system.";
-                throw new ConflictException(error);
-            }
-            if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.USER_NAME_URI)) {
-                claimsMap.remove(SCIMConstants.UserSchemaConstants.USER_NAME_URI);
-            }
-            carbonUM.addUser(user.getUserName(), user.getPassword(), null, claimsMap, null);
-            log.info("User: " + user.getUserName() + " is created through SCIM.");
+                if (carbonUM.isExistingUser(user.getUserName())) {
+                    String error = "User with the name: " + user.getUserName() + " already exists in the system.";
+                    throw new ConflictException(error);
+                }
+                if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.USER_NAME_URI)) {
+                    claimsMap.remove(SCIMConstants.UserSchemaConstants.USER_NAME_URI);
+                }
+                carbonUM.addUser(user.getUserName(), user.getPassword(), null, claimsMap, null);
+                log.info("User: " + user.getUserName() + " is created through SCIM.");
 
         } catch (UserStoreException e) {
             String errMsg = "Error in adding the user: " + user.getUserName() + " to the user store. ";
             errMsg += e.getMessage();
             throw new CharonException(errMsg, e);
+        } finally {
+            PrivilegedCarbonContext.endTenantFlow();
         }
-
         return user;
+
 
     }
 
     @Override
     public User getUser(String userId) throws CharonException {
-      return null;
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving user: " + userId);
+        }
+        User scimUser = null;
+        try {
+            ClaimMapping[] coreClaims;
+            ClaimMapping[] userClaims;
+            //get the user name of the user with this id
+            String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, userId,
+                    UserCoreConstants.DEFAULT_PROFILE);
+
+            if (userNames == null || userNames.length == 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("User with SCIM id: " + userId + " does not exist in the system.");
+                }
+                return null;
+            } else if (userNames != null && userNames.length == 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("User with SCIM id: " + userId + " does not exist in the system.");
+                }
+                return null;
+            } else {
+                //get Claims related to SCIM claim dialect
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                List<String> claimURIList = new ArrayList<>();
+                for (ClaimMapping claim : coreClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (ClaimMapping claim : userClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                //we assume (since id is unique per user) only one user exists for a given id
+                scimUser = this.getSCIMUser(userNames[0], claimURIList);
+                //set the schemas of the scim user
+                scimUser.setSchemas();
+                log.info("User: " + scimUser.getUserName() + " is retrieved through SCIM.");
+            }
+
+        } catch (UserStoreException e) {
+            throw new CharonException("Error in getting user information from Carbon User Store for" +
+                    "user: " + userId, e);
+        }
+        return scimUser;
     }
 
     @Override
@@ -109,7 +198,11 @@ public class SCIMUserManager implements UserManager {
         String[] userNames = null;
         String userName = null;
         try {
-
+            /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+            userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, userId,
+                    UserCoreConstants.DEFAULT_PROFILE);
             String userStoreDomainFromSP = null;
             try {
                 userStoreDomainFromSP = getUserStoreDomainFromSP();
@@ -177,6 +270,7 @@ public class SCIMUserManager implements UserManager {
         } catch (BadRequestException e) {
 
         }
+        log.info("User list is retrieved through SCIM.");
         return users;
     }
 
@@ -268,19 +362,7 @@ public class SCIMUserManager implements UserManager {
 
 
     private String getUserStoreDomainFromSP() throws IdentityApplicationManagementException {
-
-        ThreadLocalProvisioningServiceProvider threadLocalSP = IdentityApplicationManagementUtil
-                .getThreadLocalProvisioningServiceProvider();
         ServiceProvider serviceProvider = null;
-        if (threadLocalSP.getServiceProviderType() == ProvisioningServiceProviderType.OAUTH) {
-            serviceProvider = ApplicationManagementService.getInstance()
-                    .getServiceProviderByClientId(
-                            threadLocalSP.getServiceProviderName(),
-                            "oauth2", threadLocalSP.getTenantDomain());
-        } else {
-            serviceProvider = ApplicationManagementService.getInstance().getServiceProvider(
-                    threadLocalSP.getServiceProviderName(), threadLocalSP.getTenantDomain());
-        }
 
         if (serviceProvider != null && serviceProvider.getInboundProvisioningConfig() != null &&
                 !StringUtils.isBlank(serviceProvider.getInboundProvisioningConfig().getProvisioningUserStore())) {
@@ -288,6 +370,91 @@ public class SCIMUserManager implements UserManager {
         }
         return null;
     }
+
+    /**
+     * This method will return whether SCIM is enabled or not for a particular userStore. (from SCIMEnabled user
+     * store property)
+     * @param userStoreName user store name
+     * @return whether scim is enabled or not for the particular user store
+     */
+    private boolean isSCIMEnabled(String userStoreName) {
+        UserStoreManager userStoreManager = carbonUM.getSecondaryUserStoreManager(userStoreName);
+        if (userStoreManager != null) {
+            try {
+                return userStoreManager.isSCIMEnabled();
+            } catch (UserStoreException e) {
+                log.error("Error while evaluating isSCIMEnalbed for user store " + userStoreName, e);
+            }
+        }
+        return false;
+    }
+
+    private User getSCIMUser(String userName, List<String> claimURIList) throws CharonException {
+        User scimUser = null;
+
+        String userStoreDomainName = IdentityUtil.extractDomainFromName(userName);
+        if(StringUtils.isNotBlank(userStoreDomainName) && !isSCIMEnabled(userStoreDomainName)){
+            throw new CharonException("Cannot add user through scim to user store " + ". SCIM is not " +
+                    "enabled for user store " + userStoreDomainName);
+        }
+
+        try {
+            //obtain user claim values
+            Map<String, String> attributes = carbonUM.getUserClaimValues(
+                    userName, claimURIList.toArray(new String[claimURIList.size()]), null);
+            //skip simple type addresses claim because it is complex with sub types in the schema
+            if (attributes.containsKey(SCIMConstants.UserSchemaConstants.ADDRESSES_URI)) {
+                attributes.remove(SCIMConstants.UserSchemaConstants.ADDRESSES_URI);
+            }
+
+            // Add username with domain name
+            attributes.put(SCIMConstants.UserSchemaConstants.USER_NAME_URI, userName);
+
+            //get groups of user and add it as groups attribute
+            String[] roles = carbonUM.getRoleListOfUser(userName);
+            //construct the SCIM Object from the attributes
+            scimUser = (User) AttributeMapper.constructSCIMObjectFromAttributes(attributes, 1);
+            //add groups of user:
+            for (String role : roles) {
+                if (UserCoreUtil.isEveryoneRole(role, carbonUM.getRealmConfiguration())
+                        || UserCoreUtil.isPrimaryAdminRole(role, carbonUM.getRealmConfiguration())
+                        || CarbonConstants.REGISTRY_ANONNYMOUS_ROLE_NAME.equalsIgnoreCase(role)
+                        || role.toLowerCase().startsWith((UserCoreConstants.INTERNAL_DOMAIN +
+                        CarbonConstants.DOMAIN_SEPARATOR).toLowerCase())) {
+                    // carbon specific roles do not possess SCIM info, hence
+                    // skipping them.
+                    // skip intenal roles
+                    continue;
+                }
+                Group group = getGroupOnlyWithMetaAttributes(role);
+                if (group != null) { // can be null for non SCIM groups
+                    scimUser.setGroup(null, group.getId(), role);
+                }
+            }
+        } catch (UserStoreException | CharonException | NotFoundException | IdentitySCIMException |BadRequestException e) {
+            throw new CharonException("Error in getting user information for user: " + userName, e);
+        }
+        return scimUser;
+    }
+
+    /**
+     * Get group with only meta attributes.
+     *
+     * @param groupName
+     * @return
+     * @throws CharonException
+     * @throws IdentitySCIMException
+     * @throws org.wso2.carbon.user.core.UserStoreException
+     */
+    private Group getGroupOnlyWithMetaAttributes(String groupName) throws CharonException, IdentitySCIMException,
+            org.wso2.carbon.user.core.UserStoreException, BadRequestException {
+        //get other group attributes and set.
+        Group group = new Group();
+        group.setDisplayName(groupName);
+        SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+        return groupHandler.getGroupWithAttributes(group, groupName);
+    }
+
 
 }
 

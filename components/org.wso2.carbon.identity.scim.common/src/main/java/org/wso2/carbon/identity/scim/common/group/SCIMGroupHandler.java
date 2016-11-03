@@ -171,7 +171,6 @@ public class SCIMGroupHandler {
             } else if (SCIMConstants.CommonSchemaConstants.LOCATION_URI.equals(entry.getKey())) {
                 group.setLocation(entry.getValue());
             }
-            //TODO:add other mandatory attributes if exist.
         }
         return group;
     }
