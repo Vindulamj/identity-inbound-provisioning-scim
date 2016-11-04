@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.scim.provider.impl;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,20 +42,17 @@ import org.wso2.carbon.user.core.claim.ClaimManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.charon.core.v2.attributes.Attribute;
+import org.wso2.charon.core.v2.exceptions.*;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
-import org.wso2.charon.core.v2.exceptions.BadRequestException;
-import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.exceptions.ConflictException;
-import org.wso2.charon.core.v2.exceptions.NotFoundException;
 import org.wso2.charon.core.v2.extensions.UserManager;
 import org.wso2.charon.core.v2.objects.Group;
 import org.wso2.charon.core.v2.objects.User;
+import org.wso2.charon.core.v2.utils.codeutils.ExpressionNode;
 import org.wso2.charon.core.v2.utils.codeutils.Node;
 
 import java.util.*;
 
 public class SCIMUserManager implements UserManager {
-
     private static Log log = LogFactory.getLog(SCIMUserManager.class);
     private UserStoreManager carbonUM = null;
     private ClaimManager carbonClaimManager = null;
@@ -294,9 +292,6 @@ public class SCIMUserManager implements UserManager {
             Map<String, String> claims = AttributeMapper.getClaimsMap(user);
 
             //check if username of the updating user existing in the userstore.
-            //Therefore, correct way is to check the corresponding SCIM attribute for the
-            //UserNameAttribute of user-mgt.xml.
-            // Refer: SCIMUserOperationListener#isProvisioningActionAuthorized method.
             try {
                 String userStoreDomainFromSP = getUserStoreDomainFromSP();
                 User oldUser = this.getUser(user.getId());
@@ -354,11 +349,14 @@ public class SCIMUserManager implements UserManager {
             }
             //set user claim values
             carbonUM.setUserClaimValues(user.getUserName(), claims, null);
+
+            Map<String, String> oldClaimList1 = carbonUM.getUserClaimValues(user.getUserName(), claimURIList
+                    .toArray(new String[claimURIList.size()]), null);
             //if password is updated, set it separately
             if (user.getPassword() != null) {
                 carbonUM.updateCredentialByAdmin(user.getUserName(), user.getPassword());
             }
-            log.info("User: " + user.getUserName() + " updated updated through SCIM.");
+            log.info("User: " + user.getUserName() + " updated through SCIM.");
         } catch (UserStoreException | BadRequestException | CharonException e) {
             try {
                 throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
@@ -368,10 +366,79 @@ public class SCIMUserManager implements UserManager {
         }
         return user;
     }
-
+//String attributeName, String filterOperation,
+//String attributeValue
     @Override
     public List<User> filterUsers(Node node) {
-        return null;
+
+        if(node.getLeftNode() != null || node.getRightNode() != null){
+            String error = "Complex filters are not supported yet";
+        }
+        String attributeName = ((ExpressionNode)node).getAttributeValue();
+        String filterOperation = ((ExpressionNode)node).getOperation();
+        String attributeValue = ((ExpressionNode)node).getValue();
+
+        //since we only support eq filter operation at the moment, no need to check for that.
+        if (log.isDebugEnabled()) {
+            log.debug("Listing users by filter: " + attributeName + filterOperation +
+                    attributeValue);
+        }
+        List<User> filteredUsers = new ArrayList<>();
+        ClaimMapping[] userClaims;
+        ClaimMapping[] coreClaims;
+        User scimUser = null;
+        try {
+            String[] userNames = null;
+            if (!SCIMConstants.UserSchemaConstants.GROUP_URI.equals(attributeName)) {
+                //get the user name of the user with this id
+                userNames = carbonUM.getUserList(attributeName, attributeValue, UserCoreConstants.DEFAULT_PROFILE);
+            } else {
+                userNames = carbonUM.getUserListOfRole(attributeValue);
+            }
+
+            if (userNames == null || userNames.length == 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Users with filter: " + attributeName + filterOperation +
+                            attributeValue + " does not exist in the system.");
+                }
+                return Collections.emptyList();
+            } else {
+                //get claims related to SCIM claim dialect
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                List<String> claimURIList = new ArrayList<>();
+                for (ClaimMapping claim : coreClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (ClaimMapping claim : userClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (String userName : userNames) {
+
+                    if (CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME.equals(userName)) {
+                        continue;
+                    }
+
+                    scimUser = this.getSCIMUser(userName, claimURIList);
+                    //if SCIM-ID is not present in the attributes, skip
+                    if (scimUser != null && StringUtils.isBlank(scimUser.getId())) {
+                        continue;
+                    }
+                    filteredUsers.add(scimUser);
+                }
+                log.info("Users filtered through SCIM for the filter: " + attributeName + filterOperation +
+                        attributeValue);
+            }
+        } catch (UserStoreException | CharonException e) {
+            try {
+                throw new CharonException("Error in filtering users by attribute name : " + attributeName + ", " +
+                            "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+
+        }
+        return filteredUsers;
     }
 
     @Override
@@ -381,7 +448,117 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public Group createGroup(Group group) throws CharonException, ConflictException {
-        return null;
+        if (log.isDebugEnabled()) {
+            log.debug("Creating group: " + group.getDisplayName());
+        }
+        try {
+            //modify display name if no domain is specified, in order to support multiple user store feature
+            String originalName = group.getDisplayName();
+            String roleNameWithDomain = null;
+            String domainName = "";
+            try {
+                if (getUserStoreDomainFromSP() != null) {
+                    domainName = getUserStoreDomainFromSP();
+                    roleNameWithDomain = UserCoreUtil
+                            .addDomainToName(UserCoreUtil.removeDomainFromName(originalName), domainName);
+                } else if (originalName.indexOf(CarbonConstants.DOMAIN_SEPARATOR) > 0) {
+                    domainName = IdentityUtil.extractDomainFromName(originalName);
+                    roleNameWithDomain = UserCoreUtil
+                            .addDomainToName(UserCoreUtil.removeDomainFromName(originalName), domainName);
+                } else {
+                    domainName = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
+                    roleNameWithDomain = SCIMCommonUtils.getGroupNameWithDomain(originalName);
+                }
+            } catch (IdentityApplicationManagementException e) {
+                throw new CharonException("Error retrieving User Store name. ", e);
+            }
+
+            if(!isInternalOrApplicationGroup(domainName) && StringUtils.isNotBlank(domainName) && !isSCIMEnabled
+                    (domainName)){
+                throw new CharonException("Cannot add user through scim to user store " + ". SCIM is not " +
+                        "enabled for user store " + domainName);
+            }
+            group.setDisplayName(roleNameWithDomain);
+            //check if the group already exists
+            if (carbonUM.isExistingRole(group.getDisplayName(), false)) {
+                String error = "Group with name: " + group.getDisplayName() +" already exists in the system.";
+                throw new ConflictException(error);
+            }
+
+                /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+                /*if members are sent when creating the group, check whether users already exist in the
+                user store*/
+            List<Object> userIds = group.getMembers();
+            List<String> userDisplayNames = group.getMembersWithDisplayName();
+            if (CollectionUtils.isNotEmpty(userIds)) {
+                List<String> members = new ArrayList<>();
+                for (Object userId : userIds) {
+                    String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, (String) userId,
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    if (userNames == null || userNames.length == 0) {
+                        String error = "User: " + userId + " doesn't exist in the user store. " +
+                                "Hence, can not create the group: " + group.getDisplayName();
+                        throw new IdentitySCIMException(error);
+                    } else if (userNames[0].indexOf(UserCoreConstants.DOMAIN_SEPARATOR) > 0 &&
+                            !StringUtils.containsIgnoreCase(userNames[0], domainName)) {
+                        String error = "User: " + userId + " doesn't exist in the same user store. " +
+                                "Hence, can not create the group: " + group.getDisplayName();
+                        throw new IdentitySCIMException(error);
+                    } else {
+                        members.add(userNames[0]);
+                        if (CollectionUtils.isNotEmpty(userDisplayNames)) {
+                            boolean userContains = false;
+                            for (String user : userDisplayNames) {
+                                user =
+                                        user.indexOf(UserCoreConstants.DOMAIN_SEPARATOR) > 0
+                                                ? user.split(UserCoreConstants.DOMAIN_SEPARATOR)[1]
+                                                : user;
+                                if (user.equalsIgnoreCase(userNames[0].indexOf(UserCoreConstants.DOMAIN_SEPARATOR) > 0
+                                        ? userNames[0].split(UserCoreConstants.DOMAIN_SEPARATOR)[1]
+                                        : userNames[0])) {
+                                    userContains = true;
+                                    break;
+                                }
+                            }
+                            if (!userContains) {
+                                throw new IdentitySCIMException(
+                                        "Given SCIM user Id and name not matching..");
+                            }
+                        }
+                    }
+                }
+                //add other scim attributes in the identity DB since user store doesn't support some attributes.
+                SCIMGroupHandler scimGroupHandler =
+                        new SCIMGroupHandler(
+                                carbonUM.getTenantId());
+                scimGroupHandler.createSCIMAttributes(group);
+                carbonUM.addRole(group.getDisplayName(),
+                        members.toArray(new String[members.size()]), null, false);
+                log.info("Group: " + group.getDisplayName() + " is created through SCIM.");
+            } else {
+                //add other scim attributes in the identity DB since user store doesn't support some attributes.
+                SCIMGroupHandler scimGroupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+                scimGroupHandler.createSCIMAttributes(group);
+                carbonUM.addRole(group.getDisplayName(), null, null, false);
+                log.info("Group: " + group.getDisplayName() + " is created through SCIM.");
+            }
+        } catch (UserStoreException e) {
+            try {
+                SCIMGroupHandler scimGroupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+                scimGroupHandler.deleteGroupAttributes(group.getDisplayName());
+            } catch (UserStoreException | IdentitySCIMException ex) {
+                log.error("Error occurred while doing rollback operation of the SCIM table entry for role: " + group.getDisplayName(), ex);
+                throw new CharonException("Error occurred while doing rollback operation of the SCIM table entry for role: " + group.getDisplayName(), e);
+            }
+            throw new CharonException("Error occurred while adding role : " + group.getDisplayName(), e);
+        } catch (IdentitySCIMException | BadRequestException | ConflictException e) {
+            //This exception can occurr because of scimGroupHandler.createSCIMAttributes(group) or
+            //userContains=false. Therefore contextual message could not be provided.
+            throw new CharonException("Error in creating group", e);
+        }
+        return group;
     }
 
     @Override
@@ -519,6 +696,19 @@ public class SCIMUserManager implements UserManager {
         return groupHandler.getGroupWithAttributes(group, groupName);
     }
 
+    /**
+     * returns whether particular user store domain is application or internal.
+     * @param userstoreDomain user store domain
+     * @return whether passed domain name is "internal" or "application"
+     */
+    private boolean isInternalOrApplicationGroup(String userstoreDomain){
+        if(StringUtils.isNotBlank(userstoreDomain) &&
+                (SCIMProviderConstants.APPLICATION_DOMAIN.equalsIgnoreCase(userstoreDomain) ||
+                SCIMProviderConstants.INTERNAL_DOMAIN.equalsIgnoreCase(userstoreDomain))){
+            return true;
+        }
+        return false;
+    }
 
 }
 

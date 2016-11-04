@@ -36,6 +36,10 @@ public class SCIMProviderConstants {
     public static final String SCIM_CORE_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0";
     public static final String SCIM_USER_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0:User";
 
+    public static final String RESOURCE_STRING = "RESOURCE_STRING";
+    public static final String HTTP_VERB = "HTTP_VERB";
+    public static final String APPLICATION_DOMAIN = "Application";
+    public static final String INTERNAL_DOMAIN = "Internal";
 
     //ServiceProviderConfig endpoint related constants
 
@@ -59,6 +63,8 @@ public class SCIMProviderConstants {
     public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2 = "http://example.com/help/httpBasic.html";
     public static final String AUTHENTICATION_SCHEMES_TYPE_2 = "httpbasic";
     public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_2 = false;
+
+
 
 
 

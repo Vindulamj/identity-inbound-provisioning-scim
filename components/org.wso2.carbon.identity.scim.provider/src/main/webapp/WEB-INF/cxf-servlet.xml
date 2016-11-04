@@ -34,6 +34,15 @@
 
     <bean id="userBean" class="org.wso2.carbon.identity.scim.provider.resources.UserResource"/>
 
+    <jaxrs:server id="groupResource" address="/v2/Groups">
+        <jaxrs:serviceBeans>
+            <ref bean="groupBean"/>
+        </jaxrs:serviceBeans>
+
+    </jaxrs:server>
+
+    <bean id="groupBean" class="org.wso2.carbon.identity.scim.provider.resources.GroupResource"/>
+
     <jaxrs:server id="serviceProviderConfigResource" address="/v2/ServiceProviderConfig">
         <jaxrs:serviceBeans>
             <ref bean="serviceProviderConfigBean"/>
