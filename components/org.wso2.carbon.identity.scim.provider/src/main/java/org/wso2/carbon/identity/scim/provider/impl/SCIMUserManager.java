@@ -26,6 +26,7 @@ import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.provisioning.ProvisioningOperation;
 import org.wso2.carbon.identity.scim.common.group.SCIMGroupHandler;
 import org.wso2.carbon.identity.scim.common.utils.AttributeMapper;
 import org.wso2.carbon.identity.scim.common.utils.IdentitySCIMException;
@@ -137,8 +138,6 @@ public class SCIMUserManager implements UserManager {
             PrivilegedCarbonContext.endTenantFlow();
         }
         return user;
-
-
     }
 
     @Override
@@ -256,7 +255,7 @@ public class SCIMUserManager implements UserManager {
                     if (userName.contains(UserCoreConstants.NAME_COMBINER)) {
                         userName = userName.split("\\" + UserCoreConstants.NAME_COMBINER)[0];
                     }
-                    User scimUser = this.getSCIMMetaUser(userName, claimURIList);
+                    User scimUser = this.getSCIMUser(userName, claimURIList);
                     if (scimUser != null) {
                         Map<String, Attribute> attrMap = scimUser.getAttributeList();
                         if (attrMap != null && !attrMap.isEmpty()) {
@@ -267,28 +266,10 @@ public class SCIMUserManager implements UserManager {
             }
         } catch (UserStoreException e) {
             throw new CharonException("Error while retrieving users from user store..", e);
-        } catch (BadRequestException e) {
-
         }
         log.info("User list is retrieved through SCIM.");
         return users;
     }
-
-    private User getSCIMMetaUser(String userName, List<String> claimURIList) throws BadRequestException {
-        User scimUser = null;
-
-        try {
-            Map<String, String> attributes = carbonUM.getUserClaimValues(
-                    userName, claimURIList.toArray(new String[claimURIList.size()]), null);
-            attributes.put(SCIMConstants.UserSchemaConstants.USER_NAME_URI, userName);
-            scimUser = (User) AttributeMapper.constructSCIMObjectFromAttributes(attributes, 1);
-        } catch (UserStoreException | CharonException | NotFoundException e) {
-            log.error("Error in getting user information from Carbon User Store for " +
-                    "user: " + userName + " ", e);
-        }
-        return scimUser;
-    }
-
 
     @Override
     public List<User> listUsersWithPagination(int i, int i1) {
@@ -302,7 +283,90 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public User updateUser(User user) {
-        return null;
+        try {
+        if (log.isDebugEnabled()) {
+            log.debug("Updating user: " + user.getUserName());
+        }
+            //set thread local property to signal the downstream SCIMUserOperationListener
+            //about the provisioning route.
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+            //get user claim values
+            Map<String, String> claims = AttributeMapper.getClaimsMap(user);
+
+            //check if username of the updating user existing in the userstore.
+            //Therefore, correct way is to check the corresponding SCIM attribute for the
+            //UserNameAttribute of user-mgt.xml.
+            // Refer: SCIMUserOperationListener#isProvisioningActionAuthorized method.
+            try {
+                String userStoreDomainFromSP = getUserStoreDomainFromSP();
+                User oldUser = this.getUser(user.getId());
+                if (userStoreDomainFromSP != null && !userStoreDomainFromSP
+                        .equalsIgnoreCase(IdentityUtil.extractDomainFromName(oldUser.getUserName()))) {
+                    throw new CharonException("User :" + oldUser.getUserName() + "is not belong to user store " +
+                            userStoreDomainFromSP + "Hence user updating fail");
+                }
+                if (getUserStoreDomainFromSP() != null &&
+                        !UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME.equalsIgnoreCase(getUserStoreDomainFromSP())) {
+                    user.setUserName(UserCoreUtil
+                            .addDomainToName(UserCoreUtil.removeDomainFromName(user.getUserName()),
+                                    getUserStoreDomainFromSP()));
+                }
+            } catch (IdentityApplicationManagementException e) {
+                throw new CharonException("Error retrieving User Store name. ", e);
+            }
+            if (!carbonUM.isExistingUser(user.getUserName())) {
+                throw new CharonException("User name is immutable in carbon user store.");
+            }
+            /*skip groups attribute since we map groups attribute to actual groups in ldap.
+             and do not update it as an attribute in user schema*/
+            if (claims.containsKey(SCIMConstants.UserSchemaConstants.GROUP_URI)) {
+                claims.remove(SCIMConstants.UserSchemaConstants.GROUP_URI);
+            }
+
+            if (claims.containsKey(SCIMConstants.UserSchemaConstants.USER_NAME_URI)) {
+                claims.remove(SCIMConstants.UserSchemaConstants.USER_NAME_URI);
+            }
+
+            ClaimMapping[] coreClaimList;
+            ClaimMapping[] userClaimList;
+            coreClaimList = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+            userClaimList = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+
+            List<String> claimURIList = new ArrayList<>();
+            for (ClaimMapping claim : coreClaimList) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            for (ClaimMapping claim : userClaimList) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+
+            Map<String, String> oldClaimList = carbonUM.getUserClaimValues(user.getUserName(), claimURIList
+                    .toArray(new String[claimURIList.size()]), null);
+
+            for (Map.Entry<String, String> entry : oldClaimList.entrySet()) {
+                if (!entry.getKey().equals(SCIMConstants.CommonSchemaConstants.ID_URI) && !entry.getKey().equals(SCIMConstants
+                        .UserSchemaConstants.USER_NAME_URI) && !entry.getKey().equals(SCIMConstants.CommonSchemaConstants.CREATED_URI) && !entry
+                        .getKey().equals(SCIMConstants.CommonSchemaConstants.LAST_MODIFIED_URI) && !entry.getKey().equals
+                        (SCIMConstants.CommonSchemaConstants.LOCATION_URI) && !entry.getKey().equals(SCIMConstants.UserSchemaConstants
+                        .FAMILY_NAME_URI)) {
+                    carbonUM.deleteUserClaimValue(user.getUserName(), entry.getKey(), null);
+                }
+            }
+            //set user claim values
+            carbonUM.setUserClaimValues(user.getUserName(), claims, null);
+            //if password is updated, set it separately
+            if (user.getPassword() != null) {
+                carbonUM.updateCredentialByAdmin(user.getUserName(), user.getPassword());
+            }
+            log.info("User: " + user.getUserName() + " updated updated through SCIM.");
+        } catch (UserStoreException | BadRequestException | CharonException e) {
+            try {
+                throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
+            } catch (CharonException e1) {
+                //do nothing
+            }
+        }
+        return user;
     }
 
     @Override
@@ -397,11 +461,11 @@ public class SCIMUserManager implements UserManager {
             throw new CharonException("Cannot add user through scim to user store " + ". SCIM is not " +
                     "enabled for user store " + userStoreDomainName);
         }
-
         try {
             //obtain user claim values
             Map<String, String> attributes = carbonUM.getUserClaimValues(
                     userName, claimURIList.toArray(new String[claimURIList.size()]), null);
+
             //skip simple type addresses claim because it is complex with sub types in the schema
             if (attributes.containsKey(SCIMConstants.UserSchemaConstants.ADDRESSES_URI)) {
                 attributes.remove(SCIMConstants.UserSchemaConstants.ADDRESSES_URI);

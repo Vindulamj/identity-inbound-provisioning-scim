@@ -212,7 +212,7 @@ public class AttributeMapper {
                 break;
         }
         for (Map.Entry<String, String> attributeEntry : attributes.entrySet()) {
-            if (debug){
+            if(debug) {
                 log.info("AttributeKey: " + attributeEntry.getKey() + " AttributeValue:" +
                         attributeEntry.getValue());
             }
@@ -332,26 +332,29 @@ public class AttributeMapper {
 
                 }
             } else if (attributeNames.length == 3) {
+
                 String parentAttribute = attributeNames[0];
                 //get immediate parent attribute name
                 String immediateParentAttributeName = attributeNames[1];
-                AttributeSchema subSubAttributeSchema = getAttributeSchema(attributeEntry.getKey(),
-                        scimObjectType);
+
                 String subAttributeURI = attributeEntry.getKey().replace("." + attributeNames[2],"");
                 AttributeSchema subAttributeSchema = getAttributeSchema(subAttributeURI, scimObjectType);
+
+                String parentAttributeURI = subAttributeURI.replace("."+ attributeNames[1],"");
+                AttributeSchema attributeSchema = getAttributeSchema(parentAttributeURI, scimObjectType);
+
                 /*differentiate between sub attribute of Complex attribute and a Multivalued attribute
                 with complex value*/
                 if (subAttributeSchema.getMultiValued()) {
 
-                    //create map with complex value
                     SimpleAttribute typeSimpleAttribute = new SimpleAttribute(SCIMConstants.CommonSchemaConstants.TYPE,
                             attributeNames[2]);
                     AttributeSchema typeAttributeSchema = getAttributeSchema(subAttributeSchema.getURI()+".type", scimObjectType);
                     DefaultAttributeFactory.createAttribute(typeAttributeSchema, typeSimpleAttribute);
-                    SimpleAttribute valueSimpleAttribute = new SimpleAttribute(SCIMConstants.CommonSchemaConstants.VALUE,
-                            AttributeUtil.getAttributeValueFromString(attributeEntry.getValue(),
-                                    subSubAttributeSchema.getType()));
+
                     AttributeSchema valueAttributeSchema = getAttributeSchema(subAttributeSchema.getURI()+".value", scimObjectType);
+                    SimpleAttribute valueSimpleAttribute = new SimpleAttribute(SCIMConstants.CommonSchemaConstants.VALUE,
+                            AttributeUtil.getAttributeValueFromString(attributeEntry.getValue(), valueAttributeSchema.getType()));
                     DefaultAttributeFactory.createAttribute(valueAttributeSchema,valueSimpleAttribute);
 
                     //need to set a complex type value for multivalued attribute
@@ -373,28 +376,34 @@ public class AttributeMapper {
                     ComplexAttribute extensionComplexAttribute = null;
 
                     if(((AbstractSCIMObject) scimObject).isAttributeExist(parentAttribute)) {
-                        Attribute extensionAttribute = ((AbstractSCIMObject) scimObject).getAttribute(attributeNames[0]);
+                        Attribute extensionAttribute = ((AbstractSCIMObject) scimObject).getAttribute(parentAttribute);
                         extensionComplexAttribute = ((ComplexAttribute) extensionAttribute);
+                    }else{
+                        extensionComplexAttribute = new ComplexAttribute(parentAttribute);
+                        DefaultAttributeFactory.createAttribute(attributeSchema, extensionComplexAttribute);
+                        ((AbstractSCIMObject) scimObject).setAttribute(extensionComplexAttribute);
                     }
 
                     Map<String, Attribute> extensionSubAttributes = extensionComplexAttribute.getSubAttributesList();
-                    if (extensionComplexAttribute != null && extensionSubAttributes.containsKey(attributeNames[2])) {
+                    if (extensionComplexAttribute != null && extensionSubAttributes.containsKey(attributeNames[1])) {
                         //create attribute value as complex value
                         MultiValuedAttribute multiValuedAttribute =
-                                (MultiValuedAttribute) extensionSubAttributes.get(attributeNames[2]);
+                                (MultiValuedAttribute) extensionSubAttributes.get(attributeNames[1]);
                         multiValuedAttribute.setAttributeValue(complexAttribute);
                     } else {
                         //create the attribute and set it in the scim object
-                        MultiValuedAttribute multivaluedAttribute = new MultiValuedAttribute(attributeNames[2]);
+                        MultiValuedAttribute multivaluedAttribute = new MultiValuedAttribute(attributeNames[1]);
                         multivaluedAttribute.setAttributeValue(complexAttribute);
-                        DefaultAttributeFactory.createAttribute(subSubAttributeSchema, multivaluedAttribute);
+                        DefaultAttributeFactory.createAttribute(subAttributeSchema, multivaluedAttribute);
                         extensionComplexAttribute.setSubAttribute(multivaluedAttribute);
                     }
                 } else {
+
+                    AttributeSchema subSubAttributeSchema = getAttributeSchema(attributeEntry.getKey(), scimObjectType);
                     //we assume sub attribute is simple attribute
                     SimpleAttribute simpleAttribute = new SimpleAttribute(attributeNames[2],
                             AttributeUtil.getAttributeValueFromString(attributeEntry.getValue(),
-                                    subAttributeSchema.getType()));
+                                    subSubAttributeSchema.getType()));
                     DefaultAttributeFactory.createAttribute(subAttributeSchema, simpleAttribute);
 
                     // check if the super parent exist
@@ -410,7 +419,7 @@ public class AttributeMapper {
                         } else { // immediate parent does not exist
                             ComplexAttribute immediateParentAttribute = new ComplexAttribute(immediateParentAttributeName);
                             immediateParentAttribute.setSubAttribute(simpleAttribute);
-                            DefaultAttributeFactory.createAttribute(subSubAttributeSchema, immediateParentAttribute);
+                            DefaultAttributeFactory.createAttribute(subAttributeSchema, immediateParentAttribute);
                             // created the immediate parent and now set to super
                             superParentAttribute.setSubAttribute(immediateParentAttribute);
                         }
@@ -418,11 +427,11 @@ public class AttributeMapper {
                         // immediate first
                         ComplexAttribute immediateParentAttribute = new ComplexAttribute(immediateParentAttributeName);
                         immediateParentAttribute.setSubAttribute(simpleAttribute);
-                        DefaultAttributeFactory.createAttribute(subSubAttributeSchema, immediateParentAttribute);
+                        DefaultAttributeFactory.createAttribute(subAttributeSchema, immediateParentAttribute);
                         // now super parent
-                        ComplexAttribute superParentAttribute = new ComplexAttribute(attributeNames[0]);
+                        ComplexAttribute superParentAttribute = new ComplexAttribute(parentAttribute);
                         superParentAttribute.setSubAttribute(immediateParentAttribute);
-                        AttributeSchema superParentAttributeSchema = getAttributeSchema(attributeNames[0], scimObjectType);
+                        AttributeSchema superParentAttributeSchema = getAttributeSchema(parentAttributeURI, scimObjectType);
                         DefaultAttributeFactory.createAttribute(superParentAttributeSchema, superParentAttribute);
                         // now add the super to the scim object
                         ((AbstractSCIMObject) scimObject).setAttribute(superParentAttribute);
@@ -458,6 +467,9 @@ public class AttributeMapper {
                     } else {
                         List<SCIMAttributeSchema> subAttributeSchemaList = attributeSchema.getSubAttributeSchemas();
                         for (AttributeSchema subAttributeSchema : subAttributeSchemaList) {
+                            if (attributeURI.equals(subAttributeSchema.getURI())) {
+                                return subAttributeSchema;
+                            }
                             if (subAttributeSchema.getType().equals(SCIMDefinitions.DataType.COMPLEX)) {
                                 // this is only valid for extension schema
                                 List<SCIMAttributeSchema> subSubAttributeSchemaList = subAttributeSchema.getSubAttributeSchemas();
@@ -465,10 +477,6 @@ public class AttributeMapper {
                                     if (attributeURI.equals(subSubAttributeSchema.getURI())) {
                                         return subSubAttributeSchema;
                                     }
-                                }
-                            } else {
-                                if (attributeURI.equals(subAttributeSchema.getURI())) {
-                                    return subAttributeSchema;
                                 }
                             }
                         }
