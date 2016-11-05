@@ -84,6 +84,41 @@ public class GroupResource extends AbstractResource {
         return processRequest(requestAttributes);
     }
 
+    @GET
+    public Response getGroup(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                             @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                             @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                             @QueryParam(SCIMProviderConstants.FILTER) String filter,
+                             @QueryParam(SCIMProviderConstants.START_INDEX) String startIndex,
+                             @QueryParam(SCIMProviderConstants.COUNT) String count,
+                             @QueryParam(SCIMProviderConstants.SORT_BY) String sortBy,
+                             @QueryParam(SCIMProviderConstants.SORT_ORDER) String sortOrder) {
+
+        try {
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
+        Map<String, String> requestAttributes = new HashMap<>();
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
+        requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
+        requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        requestAttributes.put(SCIMProviderConstants.FILTER, filter);
+        requestAttributes.put(SCIMProviderConstants.START_INDEX, startIndex);
+        requestAttributes.put(SCIMProviderConstants.COUNT, count);
+        requestAttributes.put(SCIMProviderConstants.SORT_BY, sortBy);
+        requestAttributes.put(SCIMProviderConstants.SORT_ORDER, sortOrder);
+        return processRequest(requestAttributes);
+    }
+
+
+
     private Response processRequest(final Map<String, String> requestAttributes) {
 
         String id = requestAttributes.get(SCIMProviderConstants.ID);

@@ -578,6 +578,7 @@ public class SCIMUserManager implements UserManager {
             if (groupName != null) {
                 group = getGroupWithName(groupName);
                 group.setSchemas();
+                return group;
             } else {
                 //returning null will send a resource not found error to client by Charon.
                 return null;
@@ -586,20 +587,21 @@ public class SCIMUserManager implements UserManager {
             try {
                 throw new CharonException("Error in retrieving group : " + id, e);
             } catch (CharonException e1) {
-                e1.printStackTrace();
+                return null;
             }
         } catch (IdentitySCIMException e) {
             try {
                 throw new CharonException("Error in retrieving SCIM Group information from database.", e);
             } catch (CharonException e1) {
-                e1.printStackTrace();
+                return  null;
             }
-        } catch (BadRequestException e) {
-            e.printStackTrace();
-        } catch (CharonException e) {
-            e.printStackTrace();
+        } catch (CharonException | BadRequestException e) {
+            try {
+                throw new CharonException("Error in retrieving the group");
+            } catch (CharonException e1) {
+               return null;
+            }
         }
-        return group;
     }
 
     @Override
@@ -609,17 +611,36 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public List<Group> listGroups() throws CharonException {
-        return null;
+        List<Group> groupList = new ArrayList<>();
+        try {
+            SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+            Set<String> roleNames = groupHandler.listSCIMRoles();
+            for (String roleName : roleNames) {
+                Group group = this.getGroupWithName(roleName);
+                if (group.getId() != null) {
+                    groupList.add(group);
+                }
+            }
+        } catch (org.wso2.carbon.user.core.UserStoreException e) {
+            String errMsg = "Error in obtaining role names from user store.";
+            errMsg += e.getMessage();
+            throw new CharonException(errMsg, e);
+        } catch (IdentitySCIMException | BadRequestException e) {
+            throw new CharonException("Error in retrieving SCIM Group information from database.", e);
+        }
+        return groupList;
     }
 
     @Override
-    public int getGroupCount() {
-        return 0;
+    public int getGroupCount() throws NotImplementedException {
+        String error = "Counting is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
-    public List<Group> listGroupsWithPagination(int i, int i1) {
-        return null;
+    public List<Group> listGroupsWithPagination(int i, int i1) throws NotImplementedException {
+        String error = "Pagination is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
@@ -628,8 +649,9 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Group> sortGroups(String s, String s1) {
-        return null;
+    public List<Group> sortGroups(String s, String s1) throws NotImplementedException {
+        String error = "Sorting is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
