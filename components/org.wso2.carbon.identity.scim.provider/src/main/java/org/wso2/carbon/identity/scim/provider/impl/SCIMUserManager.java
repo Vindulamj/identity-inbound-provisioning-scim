@@ -605,7 +605,55 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public void deleteGroup(String s) throws NotFoundException, CharonException {
+    public void deleteGroup(String groupId) throws NotFoundException, CharonException {
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting group: " + groupId);
+        }
+        try {
+            /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+
+            //get group name by id
+            SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+            String groupName = groupHandler.getGroupName(groupId);
+
+            if (groupName != null) {
+                String userStoreDomainFromSP = null;
+                try {
+                    userStoreDomainFromSP = getUserStoreDomainFromSP();
+                } catch (IdentityApplicationManagementException e) {
+                    throw new CharonException("Error retrieving User Store name. ", e);
+                }
+                if (userStoreDomainFromSP != null &&
+                        !(userStoreDomainFromSP.equalsIgnoreCase(IdentityUtil.extractDomainFromName(groupName)))) {
+                    throw new CharonException("Group :" + groupName + "is not belong to user store " +
+                            userStoreDomainFromSP + "Hence group updating fail");
+                }
+
+                String userStoreDomainName = IdentityUtil.extractDomainFromName(groupName);
+                if(!isInternalOrApplicationGroup(userStoreDomainName) && StringUtils.isNotBlank(userStoreDomainName)
+                        && !isSCIMEnabled
+                        (userStoreDomainName)){
+                    throw new CharonException("Cannot add user through scim to user store " + ". SCIM is not " +
+                            "enabled for user store " + userStoreDomainName);
+                }
+
+                //delete group in carbon UM
+                carbonUM.deleteRole(groupName);
+
+                //we do not update Identity_SCIM DB here since it is updated in SCIMUserOperationListener's methods.
+                log.info("Group: " + groupName + " is deleted through SCIM.");
+
+            } else {
+                if (log.isDebugEnabled()) {
+                    log.debug("Group with SCIM id: " + groupId + " doesn't exist in the system.");
+                }
+                throw new NotFoundException();
+            }
+        } catch (UserStoreException | IdentitySCIMException e) {
+            throw new CharonException("Error occurred while deleting group " + groupId, e);
+        }
 
     }
 

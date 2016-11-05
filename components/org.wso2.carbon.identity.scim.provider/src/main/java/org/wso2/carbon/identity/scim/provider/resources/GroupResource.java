@@ -117,6 +117,27 @@ public class GroupResource extends AbstractResource {
         return processRequest(requestAttributes);
     }
 
+    @DELETE
+    @Path("{id}")
+    public Response deleteGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+
+        try {
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
+        Map<String, String> requestAttributes = new HashMap<>();
+        requestAttributes.put(SCIMProviderConstants.ID, id);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.HTTP_VERB, DELETE.class.getSimpleName());
+        return processRequest(requestAttributes);
+    }
 
 
     private Response processRequest(final Map<String, String> requestAttributes) {
