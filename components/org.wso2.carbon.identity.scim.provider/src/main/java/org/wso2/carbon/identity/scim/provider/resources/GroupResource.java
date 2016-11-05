@@ -17,6 +17,7 @@ import org.wso2.charon.core.v2.protocol.endpoints.GroupResourceManager;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,15 +26,58 @@ public class GroupResource extends AbstractResource {
 
     private static Log logger = LogFactory.getLog(GroupResource.class);
 
+    @GET
+    @Path("{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                             @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+
+        try {
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
+        Map<String, String> requestAttributes = new HashMap<>();
+        requestAttributes.put(SCIMProviderConstants.ID, id);
+        requestAttributes.put(SCIMProviderConstants.ACCEPT_HEADER, outputFormat);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
+        return processRequest(requestAttributes);
+    }
+
     @POST
     public Response createGroup(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                 @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                 String resourceString) {
 
+        try {
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidInputFormat(inputFormat)) {
+                String error = inputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
         Map<String, String> requestAttributes = new HashMap<>();
-        requestAttributes.put(SCIMProviderConstants.CONTENT_TYPE, inputFormat);
-        requestAttributes.put(SCIMProviderConstants.ACCEPT_HEADER, outputFormat);
         requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, POST.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
@@ -43,29 +87,12 @@ public class GroupResource extends AbstractResource {
     private Response processRequest(final Map<String, String> requestAttributes) {
 
         String id = requestAttributes.get(SCIMProviderConstants.ID);
-        String inputFormat = requestAttributes.get(SCIMProviderConstants.CONTENT_TYPE);
-        String outputFormat = requestAttributes.get(SCIMProviderConstants.ACCEPT_HEADER);
         String authorization = requestAttributes.get(SCIMProviderConstants.AUTHORIZATION);
         String httpVerb = requestAttributes.get(SCIMProviderConstants.HTTP_VERB);
         String resourceString = requestAttributes.get(SCIMProviderConstants.RESOURCE_STRING);
         JSONEncoder encoder = null;
         try {
-            // content-type header is compulsory in post request.
-            if (inputFormat == null) {
-                String error = SCIMProviderConstants.CONTENT_TYPE
-                        + " not present in the request header";
-                throw new FormatNotSupportedException(error);
-            }
 
-            if(!isValidInputFormat(inputFormat)){
-                String error = inputFormat + " is not supported.";
-                throw  new FormatNotSupportedException(error);
-            }
-
-            if(!isValidOutputFormat(outputFormat)){
-                String error = outputFormat + " is not supported.";
-                throw  new FormatNotSupportedException(error);
-            }
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
             //obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
@@ -111,8 +138,6 @@ public class GroupResource extends AbstractResource {
 
         } catch (CharonException e) {
             return handleCharonException(e, encoder);
-        } catch (FormatNotSupportedException e) {
-            return handleFormatNotSupportedException(e);
         } catch (BadRequestException e) {
             if (logger.isDebugEnabled()) {
                 logger.debug(e.getMessage(), e);

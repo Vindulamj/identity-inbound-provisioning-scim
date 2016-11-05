@@ -270,13 +270,15 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<User> listUsersWithPagination(int i, int i1) {
-        return null;
+    public List<User> listUsersWithPagination(int i, int i1) throws NotImplementedException {
+        String error = "Pagination is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
-    public int getUserCount() {
-        return 0;
+    public int getUserCount() throws NotImplementedException {
+        String error = "Counting is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
@@ -442,8 +444,9 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<User> sortUsers(String s, String s1) {
-        return null;
+    public List<User> sortUsers(String s, String s1) throws NotImplementedException {
+        String error = "Sorting is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
@@ -562,8 +565,41 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group getGroup(String s) {
-        return null;
+    public Group getGroup(String id) {
+        if (log.isDebugEnabled()) {
+            log.debug("Retrieving group with id: " + id);
+        }
+        Group group = null;
+        try {
+            SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+            //get group name by Id
+            String groupName = groupHandler.getGroupName(id);
+
+            if (groupName != null) {
+                group = getGroupWithName(groupName);
+                group.setSchemas();
+            } else {
+                //returning null will send a resource not found error to client by Charon.
+                return null;
+            }
+        } catch (org.wso2.carbon.user.core.UserStoreException e) {
+            try {
+                throw new CharonException("Error in retrieving group : " + id, e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (IdentitySCIMException e) {
+            try {
+                throw new CharonException("Error in retrieving SCIM Group information from database.", e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+        } catch (CharonException e) {
+            e.printStackTrace();
+        }
+        return group;
     }
 
     @Override
@@ -708,6 +744,42 @@ public class SCIMUserManager implements UserManager {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Get the full group with all the details including users.
+     *
+     * @param groupName
+     * @return
+     * @throws CharonException
+     * @throws org.wso2.carbon.user.core.UserStoreException
+     * @throws IdentitySCIMException
+     */
+    private Group getGroupWithName(String groupName)
+            throws CharonException, org.wso2.carbon.user.core.UserStoreException, IdentitySCIMException, BadRequestException {
+
+        String userStoreDomainName = IdentityUtil.extractDomainFromName(groupName);
+        if(!isInternalOrApplicationGroup(userStoreDomainName) && StringUtils.isNotBlank(userStoreDomainName) &&
+                !isSCIMEnabled(userStoreDomainName)){
+            throw new CharonException("Cannot retrieve group through scim to user store " + ". SCIM is not " +
+                    "enabled for user store " + userStoreDomainName);
+        }
+
+        Group group = new Group();
+        group.setDisplayName(groupName);
+        String[] userNames = carbonUM.getUserListOfRole(groupName);
+
+        //get the ids of the users and set them in the group with id + display name
+        if (userNames != null && userNames.length != 0) {
+            for (String userName : userNames) {
+                String userId = carbonUM.getUserClaimValue(userName, SCIMConstants.CommonSchemaConstants.ID_URI, null);
+                group.setMember(userId, userName);
+            }
+        }
+        //get other group attributes and set.
+        SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
+        group = groupHandler.getGroupWithAttributes(group, groupName);
+        return group;
     }
 
 }
