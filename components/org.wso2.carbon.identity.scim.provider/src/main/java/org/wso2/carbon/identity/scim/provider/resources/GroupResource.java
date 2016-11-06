@@ -31,7 +31,9 @@ public class GroupResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
                              @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                             @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                             @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes) {
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -47,6 +49,8 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.ACCEPT_HEADER, outputFormat);
         requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
+        requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
+        requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
         return processRequest(requestAttributes);
     }
 
@@ -54,6 +58,8 @@ public class GroupResource extends AbstractResource {
     public Response createGroup(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                 @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                 String resourceString) {
 
         try {
@@ -81,6 +87,8 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, POST.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
+        requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
+        requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
         return processRequest(requestAttributes);
     }
 
@@ -139,6 +147,47 @@ public class GroupResource extends AbstractResource {
         return processRequest(requestAttributes);
     }
 
+    @PUT
+    @Path("{id}")
+    public Response updateGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                                @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
+                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
+                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                                String resourceString) {
+
+        try {
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidInputFormat(inputFormat)) {
+                String error = inputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
+
+        Map<String, String> requestAttributes = new HashMap<>();
+        requestAttributes.put(SCIMProviderConstants.ID, id);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.HTTP_VERB, PUT.class.getSimpleName());
+        requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
+        requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
+        requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        return processRequest(requestAttributes);
+    }
 
     private Response processRequest(final Map<String, String> requestAttributes) {
 
@@ -146,6 +195,9 @@ public class GroupResource extends AbstractResource {
         String authorization = requestAttributes.get(SCIMProviderConstants.AUTHORIZATION);
         String httpVerb = requestAttributes.get(SCIMProviderConstants.HTTP_VERB);
         String resourceString = requestAttributes.get(SCIMProviderConstants.RESOURCE_STRING);
+        String attributes = requestAttributes.get(SCIMProviderConstants.ATTRIBUTES);
+        String excludedAttributes = requestAttributes.get(SCIMProviderConstants.EXCLUDE_ATTRIBUTES);
+
         JSONEncoder encoder = null;
         try {
 
@@ -166,26 +218,26 @@ public class GroupResource extends AbstractResource {
                 String sortBy = requestAttributes.get(SCIMProviderConstants.SORT_BY);
                 String sortOrder = requestAttributes.get(SCIMProviderConstants.SORT_ORDER);
                 if (filter != null) {
-                    scimResponse = groupResourceManager.listByFilter(filter, userManager, null,null);
+                    scimResponse = groupResourceManager.listByFilter(filter, userManager, attributes, excludedAttributes);
                 } else if (startIndex != null && count != null) {
                     scimResponse = groupResourceManager.listWithPagination(Integer.valueOf(startIndex),
-                            Integer.valueOf(count), userManager, null,null);
+                            Integer.valueOf(count), userManager, attributes, excludedAttributes);
                 } else if (sortBy != null) {
-                    scimResponse = groupResourceManager.listBySort(sortBy, sortOrder, userManager, null, null);
+                    scimResponse = groupResourceManager.listBySort(sortBy, sortOrder, userManager, attributes, excludedAttributes);
                 } else if (startIndex == null && count == null) {
-                    scimResponse = groupResourceManager.list(userManager, null, null);
+                    scimResponse = groupResourceManager.list(userManager, attributes, excludedAttributes);
                 } else {
                     String error = "Error in the request";
                     //bad request
                     throw new BadRequestException(error);
                 }
             } else if (GET.class.getSimpleName().equals(httpVerb)) {
-                scimResponse = groupResourceManager.get(id, userManager, null, null);
+                scimResponse = groupResourceManager.get(id, userManager, attributes, excludedAttributes);
             } else if (POST.class.getSimpleName().equals(httpVerb)) {
-                scimResponse = groupResourceManager.create(resourceString, userManager, null, null);
+                scimResponse = groupResourceManager.create(resourceString, userManager, attributes, excludedAttributes);
             } else if (PUT.class.getSimpleName().equals(httpVerb)) {
                 scimResponse =
-                        groupResourceManager.updateWithPUT(id, resourceString, userManager, null, null);
+                        groupResourceManager.updateWithPUT(id, resourceString, userManager, attributes, excludedAttributes);
             } else if (DELETE.class.getSimpleName().equals(httpVerb)) {
                 scimResponse = groupResourceManager.delete(id, userManager);
             }

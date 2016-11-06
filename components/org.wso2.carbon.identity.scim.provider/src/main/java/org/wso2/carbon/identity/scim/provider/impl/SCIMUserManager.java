@@ -42,11 +42,14 @@ import org.wso2.carbon.user.core.claim.ClaimManager;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.charon.core.v2.attributes.Attribute;
+import org.wso2.charon.core.v2.attributes.MultiValuedAttribute;
+import org.wso2.charon.core.v2.attributes.SimpleAttribute;
 import org.wso2.charon.core.v2.exceptions.*;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 import org.wso2.charon.core.v2.extensions.UserManager;
 import org.wso2.charon.core.v2.objects.Group;
 import org.wso2.charon.core.v2.objects.User;
+import org.wso2.charon.core.v2.utils.AttributeUtil;
 import org.wso2.charon.core.v2.utils.codeutils.ExpressionNode;
 import org.wso2.charon.core.v2.utils.codeutils.Node;
 
@@ -777,8 +780,166 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group updateGroup(Group group) {
-        return null;
+    public Group updateGroup(Group oldGroup, Group newGroup) {
+
+        try {
+            String userStoreDomainFromSP = getUserStoreDomainFromSP();
+
+            if(userStoreDomainFromSP != null && !userStoreDomainFromSP.equalsIgnoreCase(
+                    IdentityUtil.extractDomainFromName(oldGroup.getDisplayName()))) {
+                throw new CharonException("Group :" + oldGroup.getDisplayName() + "is not belong to user store " +
+                        userStoreDomainFromSP + "Hence group updating fail");
+            }
+            oldGroup.setDisplayName(UserCoreUtil.addDomainToName(UserCoreUtil.removeDomainFromName(oldGroup.getDisplayName()),
+                    IdentityUtil.extractDomainFromName(oldGroup.getDisplayName())));
+
+            newGroup.setDisplayName(UserCoreUtil.addDomainToName(UserCoreUtil.removeDomainFromName(newGroup.getDisplayName()),
+                    IdentityUtil.extractDomainFromName(newGroup.getDisplayName())));
+
+            String primaryDomain = IdentityUtil.getPrimaryDomainName();
+            if (IdentityUtil.extractDomainFromName(newGroup.getDisplayName()).equals(primaryDomain) && !(IdentityUtil
+                    .extractDomainFromName(oldGroup.getDisplayName())
+                    .equals(primaryDomain))) {
+                String userStoreDomain = IdentityUtil.extractDomainFromName(oldGroup.getDisplayName());
+                newGroup.setDisplayName(UserCoreUtil.addDomainToName(newGroup.getDisplayName(), userStoreDomain));
+
+            } else if (!IdentityUtil.extractDomainFromName(oldGroup.getDisplayName())
+                    .equals(IdentityUtil.extractDomainFromName(newGroup.getDisplayName()))) {
+                throw new IdentitySCIMException(
+                        "User store domain of the group is not matching with the given SCIM group Id.");
+            }
+
+            newGroup.setDisplayName(SCIMCommonUtils.getGroupNameWithDomain(newGroup.getDisplayName()));
+            oldGroup.setDisplayName(SCIMCommonUtils.getGroupNameWithDomain(oldGroup.getDisplayName()));
+
+            if (log.isDebugEnabled()) {
+                log.debug("Updating group: " + oldGroup.getDisplayName());
+            }
+
+            String groupName = newGroup.getDisplayName();
+            String userStoreDomainForGroup = IdentityUtil.extractDomainFromName(groupName);
+
+            if (newGroup.getMembers() != null && !(newGroup.getMembers().isEmpty()) &&
+                    !isInternalOrApplicationGroup(userStoreDomainForGroup)) {
+                newGroup = addDomainToUserMembers(newGroup, userStoreDomainForGroup);
+            }
+            boolean updated = false;
+                /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+            //check if the user ids sent in updated group exist in the user store and the associated user name
+            //also a matching one.
+            List<Object> userIds = newGroup.getMembers();
+            List<String> userDisplayNames = newGroup.getMembersWithDisplayName();
+
+                /* compare user store domain of group and user store domain of user name , if there is a mismatch do not
+                 update the group */
+            if (userDisplayNames != null && userDisplayNames.size() > 0) {
+                for (String userDisplayName : userDisplayNames) {
+                    String userStoreDomainForUser =
+                            IdentityUtil.extractDomainFromName(userDisplayName);
+                    if (!isInternalOrApplicationGroup(userStoreDomainForGroup) && !userStoreDomainForGroup.equalsIgnoreCase
+                            (userStoreDomainForUser)) {
+                        throw new IdentitySCIMException(
+                                userDisplayName + " does not " + "belongs to user store " + userStoreDomainForGroup);
+                    }
+
+                }
+            }
+
+            if (CollectionUtils.isNotEmpty(userIds)) {
+                String[] userNames = null;
+                for (Object userId : userIds) {
+                    userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI,
+                            UserCoreUtil.addDomainToName((String) userId, userStoreDomainForGroup),
+                            UserCoreConstants.DEFAULT_PROFILE);
+                    if (userNames == null || userNames.length == 0) {
+                        String error = "User: " + userId + " doesn't exist in the user store. " +
+                                "Hence, can not update the group: " + oldGroup.getDisplayName();
+                        throw new IdentitySCIMException(error);
+                    } else {
+                        if (!UserCoreUtil.isContain(UserCoreUtil.removeDomainFromName(userNames[0]),
+                                UserCoreUtil.removeDomainFromNames(userDisplayNames.toArray(
+                                        new String[userDisplayNames.size()])))) {
+                            throw new IdentitySCIMException("Given SCIM user Id and name not matching..");
+                        }
+                    }
+                }
+            }
+            //we do not update Identity_SCIM DB here since it is updated in SCIMUserOperationListener's methods.
+
+            //update name if it is changed
+            if (!(oldGroup.getDisplayName().equalsIgnoreCase(newGroup.getDisplayName()))) {
+                //update group name in carbon UM
+                carbonUM.updateRoleName(oldGroup.getDisplayName(),
+                        newGroup.getDisplayName());
+
+                updated = true;
+            }
+
+            //find out added members and deleted members..
+            List<String> oldMembers = oldGroup.getMembersWithDisplayName();
+            List<String> newMembers = newGroup.getMembersWithDisplayName();
+            if (newMembers != null) {
+
+                List<String> addedMembers = new ArrayList<>();
+                List<String> deletedMembers = new ArrayList<>();
+
+                //check for deleted members
+                if (CollectionUtils.isNotEmpty(oldMembers)) {
+                    for (String oldMember : oldMembers) {
+                        if (newMembers != null && newMembers.contains(oldMember)) {
+                            continue;
+                        }
+                        deletedMembers.add(oldMember);
+                    }
+                }
+
+                //check for added members
+                if (CollectionUtils.isNotEmpty(newMembers)) {
+                    for (String newMember : newMembers) {
+                        if (oldMembers != null && oldMembers.contains(newMember)) {
+                            continue;
+                        }
+                        addedMembers.add(newMember);
+                    }
+                }
+
+                if (CollectionUtils.isNotEmpty(addedMembers) || CollectionUtils.isNotEmpty(deletedMembers)) {
+                    carbonUM.updateUserListOfRole(newGroup.getDisplayName(),
+                            deletedMembers.toArray(new String[deletedMembers.size()]),
+                            addedMembers.toArray(new String[addedMembers.size()]));
+                    updated = true;
+                }
+            }
+            if (updated) {
+                log.info("Group: " + newGroup.getDisplayName() + " is updated through SCIM.");
+            } else {
+                log.warn("There is no updated field in the group: " + oldGroup.getDisplayName() +
+                        ". Therefore ignoring the provisioning.");
+            }
+
+        } catch (UserStoreException | IdentitySCIMException e) {
+            try {
+                throw new CharonException("Error occurred while updating old group : " + oldGroup.getDisplayName(), e);
+            } catch (CharonException e1) {
+                //do nothing
+            }
+        } catch (IdentityApplicationManagementException e){
+            try {
+                throw new CharonException("Error retrieving User Store name. ", e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (BadRequestException | CharonException e) {
+            try {
+                throw new CharonException("Error in updating the group", e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        }
+
+        return newGroup;
     }
 
 
@@ -926,5 +1087,39 @@ public class SCIMUserManager implements UserManager {
         return group;
     }
 
+    /**
+     * This is used to add domain name to the members of a group
+     *
+     * @param group
+     * @param userStoreDomain
+     * @return
+     * @throws CharonException
+     */
+    private Group addDomainToUserMembers(Group group, String userStoreDomain) throws CharonException {
+        List<Object> membersId = group.getMembers();
+
+        if (StringUtils.isBlank(userStoreDomain) || membersId == null || membersId.isEmpty()) {
+            return group;
+        }
+
+        if (group.isAttributeExist(SCIMConstants.GroupSchemaConstants.MEMBERS)) {
+            MultiValuedAttribute members = (MultiValuedAttribute) group.getAttributeList().get(
+                    SCIMConstants.GroupSchemaConstants.MEMBERS);
+            List<Attribute> attributeValues = members.getAttributeValues();
+
+            if (attributeValues != null && !attributeValues.isEmpty()) {
+                for (Attribute attributeValue : attributeValues) {
+                    SimpleAttribute displayNameAttribute = (SimpleAttribute) attributeValue.getSubAttribute(
+                            SCIMConstants.CommonSchemaConstants.DISPLAY);
+                    String displayName =
+                            AttributeUtil.getStringValueOfAttribute(displayNameAttribute.getValue(),
+                                    displayNameAttribute.getType());
+                    displayNameAttribute.setValue(UserCoreUtil.addDomainToName(
+                            UserCoreUtil.removeDomainFromName(displayName), userStoreDomain));
+                }
+            }
+        }
+        return group;
+    }
 }
 
