@@ -298,10 +298,6 @@ public class SCIMUserManager implements UserManager {
             Map<String, String> claims = AttributeMapper.getClaimsMap(user);
 
             //check if username of the updating user existing in the userstore.
-            //TODO:immutable userId can be something else other than username. eg: mail.
-            //Therefore, correct way is to check the corresponding SCIM attribute for the
-            //UserNameAttribute of user-mgt.xml.
-            // Refer: SCIMUserOperationListener#isProvisioningActionAuthorized method.
             try {
                 String userStoreDomainFromSP = getUserStoreDomainFromSP();
                 User oldUser = this.getUser(user.getId());
@@ -369,19 +365,17 @@ public class SCIMUserManager implements UserManager {
             try {
                 throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
             } catch (CharonException e1) {
-                e1.printStackTrace();
                 return  null;
             }
-        } catch (BadRequestException e) {
-            e.printStackTrace();
-            return  null;
-        } catch (CharonException e) {
-            e.printStackTrace();
-            return  null;
+        } catch (BadRequestException | CharonException e) {
+            try {
+                throw new CharonException("Error occured while trying to update the user");
+            } catch (CharonException e1) {
+                return null;
+            }
         }
     }
-//String attributeName, String filterOperation,
-//String attributeValue
+
     @Override
     public List<User> filterUsers(Node node) throws NotImplementedException {
 
@@ -455,7 +449,6 @@ public class SCIMUserManager implements UserManager {
             } catch (CharonException e1) {
                 e1.printStackTrace();
             }
-
         }
         return filteredUsers;
     }
@@ -574,7 +567,7 @@ public class SCIMUserManager implements UserManager {
             }
             throw new CharonException("Error occurred while adding role : " + group.getDisplayName(), e);
         } catch (IdentitySCIMException | BadRequestException | ConflictException e) {
-            //This exception can occurr because of scimGroupHandler.createSCIMAttributes(group) or
+            //This exception can occur because of scimGroupHandler.createSCIMAttributes(group) or
             //userContains=false. Therefore contextual message could not be provided.
             throw new CharonException("Error in creating group", e);
         }
@@ -980,6 +973,13 @@ public class SCIMUserManager implements UserManager {
         return false;
     }
 
+    /**
+     * get the specfied user from the store
+     * @param userName
+     * @param claimURIList
+     * @return
+     * @throws CharonException
+     */
     private User getSCIMUser(String userName, List<String> claimURIList) throws CharonException {
         User scimUser = null;
 

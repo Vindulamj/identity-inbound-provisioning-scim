@@ -30,6 +30,11 @@ import java.util.Map;
  */
 public class SupportUtils {
 
+    /**
+     * build the jaxrs response
+     * @param scimResponse
+     * @return
+     */
     public static Response buildResponse(SCIMResponse scimResponse) {
         //create a response builder with the status code of the response to be returned.
         Response.ResponseBuilder responseBuilder = Response.status(scimResponse.getResponseStatus());
@@ -48,6 +53,11 @@ public class SupportUtils {
         return responseBuilder.build();
     }
 
+    /**
+     * decode the base64 encoded string
+     * @param encodedString
+     * @return
+     */
     public static String decodeBase64(String encodedString){
         // decode it and extract username and password
         byte[] decodedAuthHeader = Base64.decode(encodedString.split(" ")[1]);
