@@ -41,6 +41,8 @@ public class SCIMProviderConstants {
     public static final String APPLICATION_DOMAIN = "Application";
     public static final String INTERNAL_DOMAIN = "Internal";
 
+    public static final String EQ = "eq";
+
     //ServiceProviderConfig endpoint related constants
 
     public static final String DOCUMENTATION_URL = "";

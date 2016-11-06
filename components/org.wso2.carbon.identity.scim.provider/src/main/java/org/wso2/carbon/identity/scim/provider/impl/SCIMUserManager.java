@@ -371,16 +371,21 @@ public class SCIMUserManager implements UserManager {
 //String attributeName, String filterOperation,
 //String attributeValue
     @Override
-    public List<User> filterUsers(Node node) {
+    public List<User> filterUsers(Node node) throws NotImplementedException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
+            throw new NotImplementedException(error);
         }
+
         String attributeName = ((ExpressionNode)node).getAttributeValue();
         String filterOperation = ((ExpressionNode)node).getOperation();
         String attributeValue = ((ExpressionNode)node).getValue();
 
-        //since we only support eq filter operation at the moment, no need to check for that.
+        if(!filterOperation.equalsIgnoreCase(SCIMProviderConstants.EQ)){
+            String error = "Filter operator "+ filterOperation +" is not implemented";
+            throw new NotImplementedException(error);
+        }
         if (log.isDebugEnabled()) {
             log.debug("Listing users by filter: " + attributeName + filterOperation +
                     attributeValue);
@@ -692,8 +697,77 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Group> filterGroups(Node node) {
-        return null;
+    public List<Group> filterGroups(Node node) throws NotImplementedException {
+
+        if(node.getLeftNode() != null || node.getRightNode() != null){
+            String error = "Complex filters are not supported yet";
+            throw new NotImplementedException(error);
+        }
+        String attributeName = ((ExpressionNode)node).getAttributeValue();
+        String filterOperation = ((ExpressionNode)node).getOperation();
+        String attributeValue = ((ExpressionNode)node).getValue();
+
+        if(!filterOperation.equalsIgnoreCase(SCIMProviderConstants.EQ)){
+            String error = "Filter operator "+ filterOperation +" is not implemented";
+            throw new NotImplementedException(error);
+        }
+
+        if (log.isDebugEnabled()) {
+            log.debug("Listing groups with filter: " + attributeName + filterOperation +
+                    attributeValue);
+        }
+        List<Group> filteredGroups = new ArrayList<>();
+        Group group = null;
+        try {
+            if (attributeValue != null && carbonUM.isExistingRole(attributeValue, false)) {
+                //skip internal roles
+                if ((CarbonConstants.REGISTRY_ANONNYMOUS_ROLE_NAME.equals(attributeValue)) ||
+                        UserCoreUtil.isEveryoneRole(attributeValue, carbonUM.getRealmConfiguration()) ||
+                        UserCoreUtil.isPrimaryAdminRole(attributeValue, carbonUM.getRealmConfiguration())) {
+                    throw new IdentitySCIMException("Internal roles do not support SCIM.");
+                }
+                /********we expect only one result**********/
+                //construct the group name with domain -if not already provided, in order to support
+                //multiple user store feature with SCIM.
+                String groupNameWithDomain = null;
+                if (attributeValue.indexOf(CarbonConstants.DOMAIN_SEPARATOR) > 0) {
+                    groupNameWithDomain = attributeValue;
+                } else {
+                    groupNameWithDomain = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME + CarbonConstants.DOMAIN_SEPARATOR
+                            + attributeValue;
+                }
+                group = getGroupWithName(groupNameWithDomain);
+                filteredGroups.add(group);
+            } else {
+                //returning null will send a resource not found error to client by Charon.
+                return Collections.emptyList();
+            }
+        } catch (org.wso2.carbon.user.core.UserStoreException e) {
+            try {
+                throw new CharonException("Error in filtering groups by attribute name : " + attributeName + ", " +
+                        "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (org.wso2.carbon.user.api.UserStoreException e) {
+            try {
+                throw new CharonException("Error in filtering group with filter: "
+                        + attributeName + filterOperation + attributeValue, e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (IdentitySCIMException e) {
+            try {
+                throw new CharonException("Error in retrieving SCIM Group information from database.", e);
+            } catch (CharonException e1) {
+                e1.printStackTrace();
+            }
+        } catch (BadRequestException e) {
+            e.printStackTrace();
+        } catch (CharonException e) {
+            e.printStackTrace();
+        }
+        return filteredGroups;
     }
 
     @Override
