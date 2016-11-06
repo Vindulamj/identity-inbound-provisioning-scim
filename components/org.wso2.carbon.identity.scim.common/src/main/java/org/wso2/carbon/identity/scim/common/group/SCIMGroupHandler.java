@@ -38,7 +38,6 @@ import java.util.UUID;
 /**
  * This is for managing SCIM specific attributes related to Group resource in Identity_SCIM_GROUP
  * Table. This should be managed per tenant.
- * TODO: Since there are only a handful of attributes in SCIM Group schema, we add them directly.
  * But need to use the same approach as for User, by going through AttributMapper to do it in a generic way.
  */
 public class SCIMGroupHandler {

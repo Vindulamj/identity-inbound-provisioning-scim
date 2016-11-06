@@ -75,7 +75,7 @@ public class SCIMCommonUtils {
     }
 
     public static String getSCIMServiceProviderConfigURL(String id){
-        return scimServiceProviderConfig + "/" +id;
+        return scimServiceProviderConfig ;
     }
 
     /*Handling ThreadLocals*/

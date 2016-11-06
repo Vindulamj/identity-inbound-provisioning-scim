@@ -444,7 +444,6 @@ public class SCIMUserOperationListener extends AbstractIdentityUserOperationEven
     public boolean doPostUpdateRoleListOfUser(String s, String[] strings, String[] strings1,
                                               UserStoreManager userStoreManager)
             throws UserStoreException {
-        //TODO:
         return true;
     }
 
@@ -472,7 +471,6 @@ public class SCIMUserOperationListener extends AbstractIdentityUserOperationEven
         attributes.put(SCIMConstants.CommonSchemaConstants.RESOURCE_TYPE_URI, SCIMConstants.USER );
 
         return attributes;
-        //TODO: add other optional attributes like location etc.
     }
 
 }
