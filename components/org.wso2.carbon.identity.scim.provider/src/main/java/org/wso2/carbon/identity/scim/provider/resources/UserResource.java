@@ -35,6 +35,7 @@ import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon.core.v2.protocol.endpoints.UserResourceManager;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 
+import javax.annotation.processing.SupportedOptions;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -63,8 +64,11 @@ public class UserResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM user endpoint and hand-over the request.
             UserResourceManager userResourceManager = new UserResourceManager();
@@ -112,8 +116,11 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
             // obtain the user store manager
-            UserManager userManager = identitySCIMManager.getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM user endpoint and hand-over the request.
             UserResourceManager userResourceManager = new UserResourceManager();
@@ -151,8 +158,11 @@ public class UserResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM user resource manager and hand-over the request.
             UserResourceManager userResourceManager = new UserResourceManager();
@@ -196,8 +206,11 @@ public class UserResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM user resource manager and hand-over the request.
             UserResourceManager userResourceManager = new UserResourceManager();
@@ -257,8 +270,11 @@ public class UserResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM user endpoint and hand-over the request.
             UserResourceManager userResourceEndpoint = new UserResourceManager();

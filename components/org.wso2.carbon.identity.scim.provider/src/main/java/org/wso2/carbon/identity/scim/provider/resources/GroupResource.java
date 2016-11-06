@@ -204,8 +204,12 @@ public class GroupResource extends AbstractResource {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
             //obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-            //obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+
+            //decode the base64 encoded authorization parameter
+            String userName = SupportUtils.decodeBase64(authorization);
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             //create charon-SCIM group endpoint and hand-over the request.
             GroupResourceManager groupResourceManager = new GroupResourceManager();

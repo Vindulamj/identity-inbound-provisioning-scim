@@ -1,5 +1,6 @@
 package org.wso2.carbon.identity.scim.provider.util;
 
+import org.apache.axiom.om.util.Base64;
 import org.apache.commons.collections.MapUtils;
 import org.wso2.charon.core.v2.protocol.SCIMResponse;
 
@@ -27,5 +28,13 @@ public class SupportUtils {
             responseBuilder.entity(scimResponse.getResponseMessage());
         }
         return responseBuilder.build();
+    }
+
+    public static String decodeBase64(String encodedString){
+        // decode it and extract username and password
+        byte[] decodedAuthHeader = Base64.decode(encodedString.split(" ")[1]);
+        String authHeader = new String(decodedAuthHeader);
+        String userName = authHeader.split(":")[0];
+        return userName;
     }
 }
