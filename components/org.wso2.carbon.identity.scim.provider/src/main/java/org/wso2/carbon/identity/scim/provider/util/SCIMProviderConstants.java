@@ -43,7 +43,7 @@ public class SCIMProviderConstants {
 
     public static final String EQ = "eq";
 
-    //ServiceProviderConfig endpoint related constants
+    //ServiceProviderConfigResource endpoint related constants
 
     public static final String DOCUMENTATION_URL = "";
     public static final int MAX_OPERATIONS = 1000;

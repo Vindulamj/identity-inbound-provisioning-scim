@@ -50,7 +50,16 @@
 
     </jaxrs:server>
 
-    <bean id="serviceProviderConfigBean" class="org.wso2.carbon.identity.scim.provider.resources.ServiceProviderConfig"/>
+    <bean id="serviceProviderConfigBean" class="org.wso2.carbon.identity.scim.provider.resources.ServiceProviderConfigResource"/>
+
+    <jaxrs:server id="resourceType" address="/v2/ResourceType">
+        <jaxrs:serviceBeans>
+            <ref bean="ResourceTypeBean"/>
+        </jaxrs:serviceBeans>
+
+    </jaxrs:server>
+
+    <bean id="ResourceTypeBean" class="org.wso2.carbon.identity.scim.provider.resources.RecourceTypeResource"/>
 
 </beans>
 

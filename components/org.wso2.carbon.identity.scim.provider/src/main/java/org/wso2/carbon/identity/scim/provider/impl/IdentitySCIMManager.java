@@ -169,7 +169,7 @@ public class IdentitySCIMManager {
      */
     private void registerCharonConfig(){
         //config charon
-        //this values will be used in /ServiceProviderConfig endpoint
+        //this values will be used in /ServiceProviderConfigResource endpoint
         CharonConfiguration.getInstance().setDocumentationURL(SCIMProviderConstants.DOCUMENTATION_URL);
         CharonConfiguration.getInstance().setBulkSupport(false,
                                                          SCIMProviderConstants.MAX_OPERATIONS,
