@@ -460,6 +460,97 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
+    public User getMe(String userName) throws CharonException {
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting user: " + userName);
+        }
+        User scimUser = null;
+        ClaimMapping[] coreClaims;
+        ClaimMapping[] userClaims;
+        try {
+            //get Claims related to SCIM claim dialect
+            coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+            userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+            List<String> claimURIList = new ArrayList<>();
+            for (ClaimMapping claim : coreClaims) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            for (ClaimMapping claim : userClaims) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            //we assume (since id is unique per user) only one user exists for a given id
+            scimUser = this.getSCIMUser(userName, claimURIList);
+
+            if(scimUser == null){
+                log.debug("User with userName : " + userName + " does not exist in the system.");
+                throw new NotFoundException();
+            }else{
+                //set the schemas of the scim user
+                scimUser.setSchemas();
+                log.info("User: " + scimUser.getUserName() + " is retrieved through SCIM.");
+                return scimUser;
+            }
+
+        } catch (UserStoreException e) {
+            throw new CharonException("Error from getting the authenticated user");
+        } catch (NotFoundException e) {
+            try {
+                throw new NotFoundException("No such user exist");
+            } catch (NotFoundException e1) {
+                return  null;
+            }
+        }
+    }
+
+    @Override
+    public User createMe(User user) throws CharonException, ConflictException, BadRequestException {
+        return createUser(user);
+    }
+
+    @Override
+    public void deleteMe(String userName) throws NotFoundException, CharonException, NotImplementedException {
+        if (log.isDebugEnabled()) {
+            log.debug("Deleting user: " + userName);
+        }
+        User scimUser = null;
+        ClaimMapping[] coreClaims;
+        ClaimMapping[] userClaims;
+        try {
+            //get Claims related to SCIM claim dialect
+            coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
+            userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+            List<String> claimURIList = new ArrayList<>();
+            for (ClaimMapping claim : coreClaims) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            for (ClaimMapping claim : userClaims) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            //we assume (since id is unique per user) only one user exists for a given id
+            scimUser = this.getSCIMUser(userName, claimURIList);
+
+            if(scimUser == null){
+                log.debug("User with userName : " + userName + " does not exist in the system.");
+                throw new NotFoundException();
+            }else {
+            /*set thread local property to signal the downstream SCIMUserOperationListener
+                about the provisioning route.*/
+                SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+                //we assume (since id is unique per user) only one user exists for a given id
+                carbonUM.deleteUser(userName);
+                log.info("User: " + userName + " is deleted through SCIM.");
+            }
+        } catch (UserStoreException e) {
+            throw new CharonException("Error in deleting user: " + userName, e);
+        }
+    }
+
+    @Override
+    public User updateMe(User user) throws NotImplementedException {
+        return updateUser(user);
+    }
+
+    @Override
     public Group createGroup(Group group) throws CharonException, ConflictException {
         if (log.isDebugEnabled()) {
             log.debug("Creating group: " + group.getDisplayName());

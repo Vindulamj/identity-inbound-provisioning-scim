@@ -35,6 +35,7 @@ public class SCIMProviderConstants {
     public static final String ID = "id";
     public static final String SCIM_CORE_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0";
     public static final String SCIM_USER_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0:User";
+    public static final String USER_NAME = "username";
 
     public static final String RESOURCE_STRING = "RESOURCE_STRING";
     public static final String HTTP_VERB = "HTTP_VERB";

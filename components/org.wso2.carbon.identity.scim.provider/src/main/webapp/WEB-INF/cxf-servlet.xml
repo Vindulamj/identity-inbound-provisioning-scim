@@ -43,6 +43,15 @@
 
     <bean id="groupBean" class="org.wso2.carbon.identity.scim.provider.resources.GroupResource"/>
 
+    <jaxrs:server id="meResource" address="/v2/Me">
+        <jaxrs:serviceBeans>
+            <ref bean="meBean"/>
+        </jaxrs:serviceBeans>
+
+    </jaxrs:server>
+
+    <bean id="meBean" class="org.wso2.carbon.identity.scim.provider.resources.MeResource"/>
+
     <jaxrs:server id="serviceProviderConfigResource" address="/v2/ServiceProviderConfig">
         <jaxrs:serviceBeans>
             <ref bean="serviceProviderConfigBean"/>
