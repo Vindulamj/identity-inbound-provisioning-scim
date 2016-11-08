@@ -535,7 +535,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group createGroup(Group group) throws CharonException, ConflictException {
+    public Group createGroup(Group group) throws CharonException, ConflictException, BadRequestException {
         if (log.isDebugEnabled()) {
             log.debug("Creating group: " + group.getDisplayName());
         }
@@ -611,16 +611,13 @@ public class SCIMUserManager implements UserManager {
                                 }
                             }
                             if (!userContains) {
-                                throw new IdentitySCIMException(
-                                        "Given SCIM user Id and name not matching..");
+                                throw new IdentitySCIMException("Given SCIM user Id and name not matching..");
                             }
                         }
                     }
                 }
                 //add other scim attributes in the identity DB since user store doesn't support some attributes.
-                SCIMGroupHandler scimGroupHandler =
-                        new SCIMGroupHandler(
-                                carbonUM.getTenantId());
+                SCIMGroupHandler scimGroupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
                 scimGroupHandler.createSCIMAttributes(group);
                 carbonUM.addRole(group.getDisplayName(),
                         members.toArray(new String[members.size()]), null, false);
@@ -641,10 +638,10 @@ public class SCIMUserManager implements UserManager {
                 throw new CharonException("Error occurred while doing rollback operation of the SCIM table entry for role: " + group.getDisplayName(), e);
             }
             throw new CharonException("Error occurred while adding role : " + group.getDisplayName(), e);
-        } catch (IdentitySCIMException | BadRequestException | ConflictException e) {
-            //This exception can occur because of scimGroupHandler.createSCIMAttributes(group) or
-            //userContains=false. Therefore contextual message could not be provided.
-            throw new CharonException("Error in creating group", e);
+        } catch (IdentitySCIMException | BadRequestException e) {
+            String error = "Member doesn't exist in the same user store. " +
+                    "Hence, can not create the group: " + group.getDisplayName();
+            throw new BadRequestException(error);
         }
         return group;
     }
