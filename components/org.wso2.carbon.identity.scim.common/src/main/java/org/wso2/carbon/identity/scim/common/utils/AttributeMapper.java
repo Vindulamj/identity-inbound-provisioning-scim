@@ -457,7 +457,7 @@ public class AttributeMapper {
             SimpleAttribute simpleAttribute = new SimpleAttribute(attributeNames[2],
                     AttributeUtil.getAttributeValueFromString(attributeEntry.getValue(),
                             subSubAttributeSchema.getType()));
-            DefaultAttributeFactory.createAttribute(subAttributeSchema, simpleAttribute);
+            DefaultAttributeFactory.createAttribute(subSubAttributeSchema, simpleAttribute);
 
             // check if the super parent exist
             boolean superParentExist = ((AbstractSCIMObject) scimObject).isAttributeExist(attributeNames[0]);

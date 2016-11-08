@@ -285,7 +285,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User updateUser(User user) {
+    public User updateUser(User user) throws CharonException {
         try {
             if (log.isDebugEnabled()) {
                 log.debug("Updating user: " + user.getUserName());
@@ -362,22 +362,14 @@ public class SCIMUserManager implements UserManager {
             log.info("User: " + user.getUserName() + " updated updated through SCIM.");
             return user;
         } catch (UserStoreException e) {
-            try {
-                throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
-            } catch (CharonException e1) {
-                return  null;
-            }
+            throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
         } catch (BadRequestException | CharonException e) {
-            try {
-                throw new CharonException("Error occured while trying to update the user");
-            } catch (CharonException e1) {
-                return null;
-            }
+            throw new CharonException("Error occured while trying to update the user");
         }
     }
 
     @Override
-    public List<User> filterUsers(Node node) throws NotImplementedException {
+    public List<User> filterUsers(Node node) throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
@@ -443,12 +435,8 @@ public class SCIMUserManager implements UserManager {
                         attributeValue);
             }
         } catch (UserStoreException | CharonException e) {
-            try {
-                throw new CharonException("Error in filtering users by attribute name : " + attributeName + ", " +
+            throw new CharonException("Error in filtering users by attribute name : " + attributeName + ", " +
                             "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
         }
         return filteredUsers;
     }
@@ -460,7 +448,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User getMe(String userName) throws CharonException {
+    public User getMe(String userName) throws CharonException, NotFoundException {
         if (log.isDebugEnabled()) {
             log.debug("Deleting user: " + userName);
         }
@@ -494,11 +482,7 @@ public class SCIMUserManager implements UserManager {
         } catch (UserStoreException e) {
             throw new CharonException("Error from getting the authenticated user");
         } catch (NotFoundException e) {
-            try {
-                throw new NotFoundException("No such user exist");
-            } catch (NotFoundException e1) {
-                return  null;
-            }
+            throw new NotFoundException("No such user exist");
         }
     }
 
@@ -546,7 +530,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User updateMe(User user) throws NotImplementedException {
+    public User updateMe(User user) throws NotImplementedException, CharonException {
         return updateUser(user);
     }
 
@@ -666,7 +650,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group getGroup(String id) {
+    public Group getGroup(String id) throws CharonException {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving group with id: " + id);
         }
@@ -685,23 +669,11 @@ public class SCIMUserManager implements UserManager {
                 return null;
             }
         } catch (org.wso2.carbon.user.core.UserStoreException e) {
-            try {
-                throw new CharonException("Error in retrieving group : " + id, e);
-            } catch (CharonException e1) {
-                return null;
-            }
+            throw new CharonException("Error in retrieving group : " + id, e);
         } catch (IdentitySCIMException e) {
-            try {
-                throw new CharonException("Error in retrieving SCIM Group information from database.", e);
-            } catch (CharonException e1) {
-                return  null;
-            }
+            throw new CharonException("Error in retrieving SCIM Group information from database.", e);
         } catch (CharonException | BadRequestException e) {
-            try {
-                throw new CharonException("Error in retrieving the group");
-            } catch (CharonException e1) {
-               return null;
-            }
+            throw new CharonException("Error in retrieving the group");
         }
     }
 
@@ -793,7 +765,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Group> filterGroups(Node node) throws NotImplementedException {
+    public List<Group> filterGroups(Node node) throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
@@ -839,29 +811,15 @@ public class SCIMUserManager implements UserManager {
                 return Collections.emptyList();
             }
         } catch (org.wso2.carbon.user.core.UserStoreException e) {
-            try {
-                throw new CharonException("Error in filtering groups by attribute name : " + attributeName + ", " +
+            throw new CharonException("Error in filtering groups by attribute name : " + attributeName + ", " +
                         "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
-            try {
-                throw new CharonException("Error in filtering group with filter: "
+            throw new CharonException("Error in filtering group with filter: "
                         + attributeName + filterOperation + attributeValue, e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
         } catch (IdentitySCIMException e) {
-            try {
-                throw new CharonException("Error in retrieving SCIM Group information from database.", e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
+            throw new CharonException("Error in retrieving SCIM Group information from database.", e);
         } catch (BadRequestException e) {
-            e.printStackTrace();
-        } catch (CharonException e) {
-            e.printStackTrace();
+            throw new CharonException("Error in retrieving SCIM Group.", e);
         }
         return filteredGroups;
     }
@@ -873,8 +831,8 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group updateGroup(Group oldGroup, Group newGroup) {
-
+    public Group updateGroup(Group oldGroup, Group newGroup) throws CharonException {
+        String displayName = null;
         try {
             String userStoreDomainFromSP = getUserStoreDomainFromSP();
 
@@ -1011,25 +969,14 @@ public class SCIMUserManager implements UserManager {
                 log.warn("There is no updated field in the group: " + oldGroup.getDisplayName() +
                         ". Therefore ignoring the provisioning.");
             }
-
+            displayName = oldGroup.getDisplayName();
         } catch (UserStoreException | IdentitySCIMException e) {
-            try {
-                throw new CharonException("Error occurred while updating old group : " + oldGroup.getDisplayName(), e);
-            } catch (CharonException e1) {
-                //do nothing
-            }
+            throw new CharonException("Error occurred while updating old group : " + displayName, e);
         } catch (IdentityApplicationManagementException e){
-            try {
-                throw new CharonException("Error retrieving User Store name. ", e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
+            throw new CharonException("Error retrieving User Store name. ", e);
         } catch (BadRequestException | CharonException e) {
-            try {
-                throw new CharonException("Error in updating the group", e);
-            } catch (CharonException e1) {
-                e1.printStackTrace();
-            }
+            throw new CharonException("Error in updating the group", e);
+
         }
 
         return newGroup;
