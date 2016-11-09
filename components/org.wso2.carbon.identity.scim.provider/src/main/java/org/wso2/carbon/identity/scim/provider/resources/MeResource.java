@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
@@ -42,10 +43,10 @@ public class MeResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
-                            @QueryParam(SCIMProviderConstants.USER_NAME) String userName,
                             @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                             @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         JSONEncoder encoder = null;
         try {
@@ -58,11 +59,8 @@ public class MeResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
-            //decode the base64 encoded authorization parameter
-            String tenantName = SupportUtils.decodeBase64(authorization);
-
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(tenantName);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM me endpoint and hand-over the request.
             MeResourceManager meResourceManager = new MeResourceManager();
@@ -83,7 +81,6 @@ public class MeResource extends AbstractResource {
     @POST
     public Response createUser(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes,
                                String resourceString) {
@@ -111,14 +108,14 @@ public class MeResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-            //decode the base64 encoded authorization parameter
-            String tenantName = SupportUtils.decodeBase64(authorization);
-
-            // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(tenantName);
 
             // create charon-SCIM user endpoint and hand-over the request.
             MeResourceManager meResourceManager = new MeResourceManager();
+
+            String userName = meResourceManager.getUserName(resourceString);
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             SCIMResponse response = meResourceManager.create(resourceString, userManager,
                     attribute, excludedAttributes);
@@ -134,9 +131,9 @@ public class MeResource extends AbstractResource {
 
 
     @DELETE
-    public Response deleteUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
-                               @QueryParam(SCIMProviderConstants.USER_NAME) String userName) {
+    public Response deleteUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         JSONEncoder encoder = null;
         try {
@@ -153,11 +150,8 @@ public class MeResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
-            //decode the base64 encoded authorization parameter
-            String tenantName = SupportUtils.decodeBase64(authorization);
-
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(tenantName);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM me resource manager and hand-over the request.
             MeResourceManager meResourceManager = new MeResourceManager();
@@ -177,11 +171,11 @@ public class MeResource extends AbstractResource {
     @PUT
     public Response updateUser(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
-                               @QueryParam(SCIMProviderConstants.USER_NAME) String userName,
                                String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         JSONEncoder encoder = null;
         try {
@@ -207,11 +201,8 @@ public class MeResource extends AbstractResource {
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
 
-            //decode the base64 encoded authorization parameter
-            String tenantName = SupportUtils.decodeBase64(authorization);
-
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(tenantName);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM me resource manager and hand-over the request.
             MeResourceManager meResourceManager = new MeResourceManager();

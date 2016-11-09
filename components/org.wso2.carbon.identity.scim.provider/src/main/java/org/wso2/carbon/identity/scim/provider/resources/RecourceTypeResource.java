@@ -2,6 +2,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
@@ -24,7 +25,9 @@ public class RecourceTypeResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getUser(@HeaderParam("Authorization") String authorization) {
+    public Response getUser() {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -33,7 +36,7 @@ public class RecourceTypeResource extends AbstractResource {
             encoder = identitySCIMManager.getEncoder();
 
             // obtain the user store manager
-            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(authorization);
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
 
             // create charon-SCIM service provider config endpoint and hand-over the request.
             ResourceTypeResourceManager resourceTypeResourceManager = new ResourceTypeResourceManager();

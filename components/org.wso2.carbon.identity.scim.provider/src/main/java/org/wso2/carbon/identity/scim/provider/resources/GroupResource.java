@@ -2,6 +2,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
@@ -31,9 +32,10 @@ public class GroupResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
                              @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                              @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                              @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -47,7 +49,7 @@ public class GroupResource extends AbstractResource {
         Map<String, String> requestAttributes = new HashMap<>();
         requestAttributes.put(SCIMProviderConstants.ID, id);
         requestAttributes.put(SCIMProviderConstants.ACCEPT_HEADER, outputFormat);
-        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
         requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
@@ -57,10 +59,11 @@ public class GroupResource extends AbstractResource {
     @POST
     public Response createGroup(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                 @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                 @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                 String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         try {
             // content-type header is compulsory in post request.
@@ -84,7 +87,7 @@ public class GroupResource extends AbstractResource {
         }
 
         Map<String, String> requestAttributes = new HashMap<>();
-        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, POST.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
@@ -94,7 +97,6 @@ public class GroupResource extends AbstractResource {
 
     @GET
     public Response getGroup(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                              @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                              @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                              @QueryParam(SCIMProviderConstants.FILTER) String filter,
@@ -102,6 +104,8 @@ public class GroupResource extends AbstractResource {
                              @QueryParam(SCIMProviderConstants.COUNT) String count,
                              @QueryParam(SCIMProviderConstants.SORT_BY) String sortBy,
                              @QueryParam(SCIMProviderConstants.SORT_ORDER) String sortOrder) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -113,7 +117,7 @@ public class GroupResource extends AbstractResource {
         }
 
         Map<String, String> requestAttributes = new HashMap<>();
-        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
         requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
@@ -128,8 +132,9 @@ public class GroupResource extends AbstractResource {
     @DELETE
     @Path("{id}")
     public Response deleteGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
-                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -142,7 +147,7 @@ public class GroupResource extends AbstractResource {
 
         Map<String, String> requestAttributes = new HashMap<>();
         requestAttributes.put(SCIMProviderConstants.ID, id);
-        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, DELETE.class.getSimpleName());
         return processRequest(requestAttributes);
     }
@@ -152,10 +157,11 @@ public class GroupResource extends AbstractResource {
     public Response updateGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
                                 @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                 @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                 @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                 String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         try {
             // content-type header is compulsory in post request.
@@ -181,7 +187,7 @@ public class GroupResource extends AbstractResource {
 
         Map<String, String> requestAttributes = new HashMap<>();
         requestAttributes.put(SCIMProviderConstants.ID, id);
-        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, authorization);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, PUT.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
@@ -192,7 +198,7 @@ public class GroupResource extends AbstractResource {
     private Response processRequest(final Map<String, String> requestAttributes) {
 
         String id = requestAttributes.get(SCIMProviderConstants.ID);
-        String authorization = requestAttributes.get(SCIMProviderConstants.AUTHORIZATION);
+        String userName = requestAttributes.get(SCIMProviderConstants.AUTHORIZATION);
         String httpVerb = requestAttributes.get(SCIMProviderConstants.HTTP_VERB);
         String resourceString = requestAttributes.get(SCIMProviderConstants.RESOURCE_STRING);
         String attributes = requestAttributes.get(SCIMProviderConstants.ATTRIBUTES);
@@ -204,9 +210,6 @@ public class GroupResource extends AbstractResource {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
             //obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);

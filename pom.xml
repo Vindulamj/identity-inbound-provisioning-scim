@@ -28,7 +28,7 @@
     <artifactId>identity-inbound-provisioning-scim</artifactId>
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
-    <version>5.1.2</version>
+    <version>5.1.5</version>
     <name>WSO2 Carbon - SCIM Provisioning Module</name>
     <description>
 

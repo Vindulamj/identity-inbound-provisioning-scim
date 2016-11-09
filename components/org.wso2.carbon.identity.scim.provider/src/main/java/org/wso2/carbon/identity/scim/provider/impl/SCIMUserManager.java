@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
@@ -67,7 +68,6 @@ public class SCIMUserManager implements UserManager {
         consumerName = userName;
         carbonClaimManager = claimManager;
     }
-
 
     @Override
     public User createUser(User user) throws CharonException, ConflictException, BadRequestException {

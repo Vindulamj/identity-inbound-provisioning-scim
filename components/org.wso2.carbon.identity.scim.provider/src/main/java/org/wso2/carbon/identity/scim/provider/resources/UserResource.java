@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.base.IdentityConstants;
 import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
@@ -49,10 +50,10 @@ public class UserResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
                             @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                             @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                             @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes) {
 
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -63,9 +64,6 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
@@ -88,10 +86,11 @@ public class UserResource extends AbstractResource {
     @POST
     public Response createUser(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes,
                                String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         JSONEncoder encoder = null;
         try {
@@ -116,8 +115,6 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
@@ -140,9 +137,9 @@ public class UserResource extends AbstractResource {
     @DELETE
     @Path("{id}")
     public Response deleteUser(@PathParam(SCIMProviderConstants.ID) String id,
-                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization) {
+                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format) {
 
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -157,9 +154,6 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
@@ -182,7 +176,6 @@ public class UserResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
-                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                             @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
                             @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                             @QueryParam (SCIMProviderConstants.FILTER) String filter,
@@ -191,6 +184,7 @@ public class UserResource extends AbstractResource {
                             @QueryParam (SCIMProviderConstants.SORT_BY) String sortBy,
                             @QueryParam (SCIMProviderConstants.SORT_ORDER) String sortOrder) {
 
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -205,9 +199,6 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
@@ -241,10 +232,11 @@ public class UserResource extends AbstractResource {
     public Response updateUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
                                @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorization,
                                @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
 
         JSONEncoder encoder = null;
         try {
@@ -269,9 +261,6 @@ public class UserResource extends AbstractResource {
             }
             // obtain the encoder at this layer in case exceptions needs to be encoded.
             encoder = identitySCIMManager.getEncoder();
-
-            //decode the base64 encoded authorization parameter
-            String userName = SupportUtils.decodeBase64(authorization);
 
             // obtain the user store manager
             UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
