@@ -156,8 +156,15 @@ public class AttributeMapper {
             } else {
                 valueAttriubuteURI = attributeURI;
             }
-            SimpleAttribute valueAttribute =
-                    (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
+            SimpleAttribute valueAttribute = null;
+            if(attribute.getName().equals(SCIMConstants.UserSchemaConstants.ADDRESSES)){
+                 valueAttribute =
+                        (SimpleAttribute) subAttributes.get(SCIMConstants.UserSchemaConstants.FORMATTED_ADDRESS);
+            }
+            else{
+                 valueAttribute =
+                        (SimpleAttribute) subAttributes.get(SCIMConstants.CommonSchemaConstants.VALUE);
+            }
             if (valueAttribute != null && valueAttribute.getValue() != null) {
                 // put it in claims
                 claimsMap.put(valueAttriubuteURI,
@@ -305,8 +312,14 @@ public class AttributeMapper {
         if (parentAttributeSchema.getMultiValued()) {
             //get the value sub attribute
             String valueAttributeURI = attributeEntry.getKey().replace("."+attributeNames[1],"");
-            valueAttributeURI = valueAttributeURI+".value";
-            AttributeSchema valueSubAttributeSchema = getAttributeSchema(valueAttributeURI, scimObjectType);
+            AttributeSchema valueSubAttributeSchema = null;
+            if(valueAttributeURI.equals(SCIMConstants.UserSchemaConstants.ADDRESSES_URI)){
+                valueAttributeURI = valueAttributeURI+".formatted";
+                valueSubAttributeSchema = getAttributeSchema(valueAttributeURI, scimObjectType);
+            }else{
+                valueAttributeURI = valueAttributeURI+".value";
+                valueSubAttributeSchema = getAttributeSchema(valueAttributeURI, scimObjectType);
+            }
             //create map with complex value
             SimpleAttribute typeSimpleAttribute = new SimpleAttribute(SCIMConstants.CommonSchemaConstants.TYPE,
                     attributeNames[1]);
@@ -318,8 +331,7 @@ public class AttributeMapper {
             SimpleAttribute valueSimpleAttribute = new SimpleAttribute(SCIMConstants.CommonSchemaConstants.VALUE,
                     AttributeUtil.getAttributeValueFromString(attributeEntry.getValue(),
                             valueSubAttributeSchema.getType()));
-            AttributeSchema valueAttributeSchema = getAttributeSchema(parentAttributeSchema.getURI()+".value", scimObjectType);
-            DefaultAttributeFactory.createAttribute(valueAttributeSchema,valueSimpleAttribute);
+            DefaultAttributeFactory.createAttribute(valueSubAttributeSchema,valueSimpleAttribute);
 
             //need to set a complex type value for multivalued attribute
             Object type = SCIMCommonConstants.DEFAULT;
