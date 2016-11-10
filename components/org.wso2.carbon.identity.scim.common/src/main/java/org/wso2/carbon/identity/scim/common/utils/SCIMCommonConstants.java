@@ -26,6 +26,7 @@ public class SCIMCommonConstants {
     public static final String USERS = "Users";
     public static final String GROUPS = "Groups";
     public static final String SERVICE_PROVIDER_CONFIG = "ServiceProviderConfig";
+    public static final String RESOURCE_TYPE = "ResourceType";
     public static final String DEFAULT = "default";
 
     public static final int USER = 1;

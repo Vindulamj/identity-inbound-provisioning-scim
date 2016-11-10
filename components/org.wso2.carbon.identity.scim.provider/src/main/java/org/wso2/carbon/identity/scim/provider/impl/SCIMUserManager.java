@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.identity.scim.provider.impl;
 
+import org.apache.abdera.protocol.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -46,6 +47,7 @@ import org.wso2.charon.core.v2.attributes.Attribute;
 import org.wso2.charon.core.v2.attributes.MultiValuedAttribute;
 import org.wso2.charon.core.v2.attributes.SimpleAttribute;
 import org.wso2.charon.core.v2.exceptions.*;
+import org.wso2.charon.core.v2.protocol.ResponseCodeConstants;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 import org.wso2.charon.core.v2.extensions.UserManager;
 import org.wso2.charon.core.v2.objects.Group;
@@ -641,7 +643,7 @@ public class SCIMUserManager implements UserManager {
         } catch (IdentitySCIMException | BadRequestException e) {
             String error = "Member doesn't exist in the same user store. " +
                     "Hence, can not create the group: " + group.getDisplayName();
-            throw new BadRequestException(error);
+            throw new BadRequestException(ResponseCodeConstants.INVALID_VALUE,error);
         }
         return group;
     }

@@ -33,6 +33,7 @@ public class SCIMCommonUtils {
     private static String scimGroupLocation;
     private static String scimUserLocation;
     private static String scimServiceProviderConfig;
+    private static String scimResourceType;
 
     /**
      * Since we need perform provisioning through UserOperationEventListener implementation -
@@ -59,10 +60,11 @@ public class SCIMCommonUtils {
             String portOffSet = ServerConfiguration.getInstance().getFirstProperty("Ports.Offset");
             int httpsPort = 9443 + Integer.parseInt(portOffSet);
             String scimURL = "https://" + ServerConfiguration.getInstance().getFirstProperty("HostName")
-                    + ":" + String.valueOf(httpsPort) + "/wso2/scim/";
+                    + ":" + String.valueOf(httpsPort) + "/wso2/scim/v2/";
             scimUserLocation = scimURL + SCIMCommonConstants.USERS;
             scimGroupLocation = scimURL + SCIMCommonConstants.GROUPS;
             scimServiceProviderConfig = scimURL + SCIMCommonConstants.SERVICE_PROVIDER_CONFIG;
+            scimResourceType = scimURL + SCIMCommonConstants.RESOURCE_TYPE;
         }
     }
 
@@ -102,6 +104,14 @@ public class SCIMCommonUtils {
         }
         init();
         return scimServiceProviderConfig;
+    }
+
+    public static String getSCIMResourceTypeURL() {
+        if (scimResourceType != null) {
+            return scimResourceType;
+        }
+        init();
+        return scimResourceType;
     }
 
     public static String getGroupNameWithDomain(String groupName) {
