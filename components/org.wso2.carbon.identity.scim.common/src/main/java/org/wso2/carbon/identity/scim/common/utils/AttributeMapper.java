@@ -38,10 +38,7 @@ import org.wso2.charon.core.v2.objects.User;
 import org.wso2.charon.core.v2.schema.*;
 import org.wso2.charon.core.v2.utils.AttributeUtil;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is responsible for converting SCIM attributes in a SCIM object to
@@ -224,9 +221,30 @@ public class AttributeMapper {
                         attributeEntry.getValue());
             }
             String attributeURI = attributeEntry.getKey();
-            String[] attributeURIParts = attributeURI.split(":");
-            String attributeNameString = attributeURIParts[attributeURIParts.length - 1];
-            String[] attributeNames = attributeNameString.split("\\.");
+            String[] attributeNames = null;
+
+            if(attributeURI.contains(SCIMConstants.CORE_SCHEMA_URI)){
+                String[] attributeURIParts = attributeURI.split(":");
+                String attributeNameString = attributeURIParts[attributeURIParts.length - 1];
+                attributeNames = attributeNameString.split("\\.");
+            }
+            else{
+                ArrayList<String> tempAttributeNames = new ArrayList<>();
+                String extensionURI = "";
+                String[] attributeURIParts = attributeURI.split(":");
+                for(int i = 0; i < attributeURIParts.length-1; i++){
+                    extensionURI = extensionURI + ":" + attributeURIParts[i];
+                }
+                String attributeNameString = attributeURIParts[attributeURIParts.length - 1];
+                attributeNames = attributeNameString.split("\\.");
+                tempAttributeNames.add(extensionURI.substring(1));
+
+                for(int i = 0; i < attributeNames.length; i++){
+                    tempAttributeNames.add(attributeNames[i]);
+                }
+                attributeNames = tempAttributeNames.toArray(attributeNames);
+            }
+
             if (attributeNames.length == 1) {
 
                 constructSCIMObjectFromAttributesOfLevelOne(attributeEntry, scimObject, attributeNames, scimObjectType);
@@ -242,6 +260,7 @@ public class AttributeMapper {
         }
         return scimObject;
     }
+
 
     /**
      * construct the level one attributes like nickName
@@ -305,6 +324,9 @@ public class AttributeMapper {
         String parentAttributeName = attributeNames[0];
         //get parent attribute schema
         String parentAttributeURI = attributeEntry.getKey().replace("."+attributeNames[1],"");
+        if(parentAttributeURI.equals(attributeEntry.getKey())){
+            parentAttributeURI = attributeEntry.getKey().replace(":"+attributeNames[1],"");
+        }
         AttributeSchema parentAttributeSchema = getAttributeSchema(parentAttributeURI, scimObjectType);
 
                 /*differentiate between sub attribute of Complex attribute and a Multivalued attribute
@@ -373,13 +395,13 @@ public class AttributeMapper {
                                     subAttributeSchema.getType()));
             DefaultAttributeFactory.createAttribute(subAttributeSchema, simpleAttribute);
             //check whether parent attribute exists.
-            if (((AbstractSCIMObject) scimObject).isAttributeExist(parentAttributeName)) {
+            if (((AbstractSCIMObject) scimObject).isAttributeExist(parentAttributeSchema.getName())) {
                 ComplexAttribute complexAttribute =
-                        (ComplexAttribute) scimObject.getAttribute(parentAttributeName);
+                        (ComplexAttribute) scimObject.getAttribute(parentAttributeSchema.getName());
                 complexAttribute.setSubAttribute(simpleAttribute);
             } else {
                 //create parent attribute and set sub attribute
-                ComplexAttribute complexAttribute = new ComplexAttribute(parentAttributeName);
+                ComplexAttribute complexAttribute = new ComplexAttribute(parentAttributeSchema.getName());
                 complexAttribute.setSubAttribute(simpleAttribute);
                 DefaultAttributeFactory.createAttribute(parentAttributeSchema, complexAttribute);
                 ((AbstractSCIMObject) scimObject).setAttribute(complexAttribute);
@@ -405,7 +427,7 @@ public class AttributeMapper {
         String subAttributeURI = attributeEntry.getKey().replace("." + attributeNames[2],"");
         AttributeSchema subAttributeSchema = getAttributeSchema(subAttributeURI, scimObjectType);
 
-        String parentAttributeURI = subAttributeURI.replace("."+ attributeNames[1],"");
+        String parentAttributeURI = subAttributeURI.replace(":"+ attributeNames[1],"");
         AttributeSchema attributeSchema = getAttributeSchema(parentAttributeURI, scimObjectType);
 
                 /*differentiate between sub attribute of Complex attribute and a Multivalued attribute
@@ -494,9 +516,9 @@ public class AttributeMapper {
                 immediateParentAttribute.setSubAttribute(simpleAttribute);
                 DefaultAttributeFactory.createAttribute(subAttributeSchema, immediateParentAttribute);
                 // now super parent
-                ComplexAttribute superParentAttribute = new ComplexAttribute(parentAttribute);
-                superParentAttribute.setSubAttribute(immediateParentAttribute);
                 AttributeSchema superParentAttributeSchema = getAttributeSchema(parentAttributeURI, scimObjectType);
+                ComplexAttribute superParentAttribute = new ComplexAttribute(superParentAttributeSchema.getName());
+                superParentAttribute.setSubAttribute(immediateParentAttribute);
                 DefaultAttributeFactory.createAttribute(superParentAttributeSchema, superParentAttribute);
                 // now add the super to the scim object
                 ((AbstractSCIMObject) scimObject).setAttribute(superParentAttribute);

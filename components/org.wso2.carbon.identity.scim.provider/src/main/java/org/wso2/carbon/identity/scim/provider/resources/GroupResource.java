@@ -220,24 +220,14 @@ public class GroupResource extends AbstractResource {
 
             if (GET.class.getSimpleName().equals(httpVerb) && id == null) {
                 String filter = requestAttributes.get(SCIMProviderConstants.FILTER);
-                String startIndex = requestAttributes.get(SCIMProviderConstants.START_INDEX);
-                String count = requestAttributes.get(SCIMProviderConstants.COUNT);
+                int startIndex = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.START_INDEX));
+                int count = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.COUNT));
                 String sortBy = requestAttributes.get(SCIMProviderConstants.SORT_BY);
                 String sortOrder = requestAttributes.get(SCIMProviderConstants.SORT_ORDER);
-                if (filter != null) {
-                    scimResponse = groupResourceManager.listByFilter(filter, userManager, attributes, excludedAttributes);
-                } else if (startIndex != null && count != null) {
-                    scimResponse = groupResourceManager.listWithPagination(Integer.valueOf(startIndex),
-                            Integer.valueOf(count), userManager, attributes, excludedAttributes);
-                } else if (sortBy != null) {
-                    scimResponse = groupResourceManager.listBySort(sortBy, sortOrder, userManager, attributes, excludedAttributes);
-                } else if (startIndex == null && count == null) {
-                    scimResponse = groupResourceManager.list(userManager, attributes, excludedAttributes);
-                } else {
-                    String error = "Error in the request";
-                    //bad request
-                    throw new BadRequestException(error);
-                }
+
+                scimResponse = groupResourceManager.listWithGET(userManager, filter, startIndex,
+                        count, sortBy, sortOrder, attributes, excludedAttributes);
+
             } else if (GET.class.getSimpleName().equals(httpVerb)) {
                 scimResponse = groupResourceManager.get(id, userManager, attributes, excludedAttributes);
             } else if (POST.class.getSimpleName().equals(httpVerb)) {
@@ -253,11 +243,6 @@ public class GroupResource extends AbstractResource {
 
         } catch (CharonException e) {
             return handleCharonException(e, encoder);
-        } catch (BadRequestException e) {
-            if (logger.isDebugEnabled()) {
-                logger.debug(e.getMessage(), e);
-            }
-            return SupportUtils.buildResponse(AbstractResourceManager.encodeSCIMException(e));
         }
     }
 

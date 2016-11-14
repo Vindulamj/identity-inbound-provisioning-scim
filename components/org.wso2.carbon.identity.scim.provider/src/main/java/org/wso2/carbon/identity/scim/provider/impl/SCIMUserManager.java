@@ -18,22 +18,18 @@
 
 package org.wso2.carbon.identity.scim.provider.impl;
 
-import org.apache.abdera.protocol.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
-import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
 import org.wso2.carbon.identity.application.common.model.ServiceProvider;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.provisioning.ProvisioningOperation;
 import org.wso2.carbon.identity.scim.common.group.SCIMGroupHandler;
 import org.wso2.carbon.identity.scim.common.utils.AttributeMapper;
 import org.wso2.carbon.identity.scim.common.utils.IdentitySCIMException;
-import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.user.api.ClaimMapping;
@@ -55,6 +51,7 @@ import org.wso2.charon.core.v2.objects.User;
 import org.wso2.charon.core.v2.utils.AttributeUtil;
 import org.wso2.charon.core.v2.utils.codeutils.ExpressionNode;
 import org.wso2.charon.core.v2.utils.codeutils.Node;
+import org.wso2.charon.core.v2.utils.codeutils.SearchRequest;
 
 import java.util.*;
 
@@ -177,6 +174,7 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
+
                 //we assume (since id is unique per user) only one user exists for a given id
                 scimUser = this.getSCIMUser(userNames[0], claimURIList);
                 //set the schemas of the scim user
@@ -236,11 +234,32 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<User> listUsers() throws CharonException {
+    public List<Object> listUsersWithGET(Node rootNode, int startIndex, int count, String sortBy, String sortOrder)
+            throws CharonException, NotImplementedException, BadRequestException {
+        if(sortBy != null || sortOrder != null) {
+            throw new NotImplementedException("Sorting is not supported");
+        }  else if(startIndex != 1){
+            throw new NotImplementedException("Pagination is not supported");
+        } else if(rootNode != null) {
+            return filterUsers(rootNode);
+        } else {
+            return listUsers();
+        }
+    }
+
+    @Override
+    public List<Object> listUsersWithPost(SearchRequest searchRequest)
+            throws CharonException, NotImplementedException, BadRequestException {
+        return null;
+    }
+
+    private List<Object> listUsers() throws CharonException {
 
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
-        List<User> users = new ArrayList<>();
+        List<Object> users = new ArrayList<>();
+        //0th index is to store total number of results;
+        users.add(0);
         try {
             String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, "*", null);
             if (userNames != null && userNames.length != 0) {
@@ -254,6 +273,7 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
+
                 for (String userName : userNames) {
                     if (userName.contains(UserCoreConstants.NAME_COMBINER)) {
                         userName = userName.split("\\" + UserCoreConstants.NAME_COMBINER)[0];
@@ -266,24 +286,14 @@ public class SCIMUserManager implements UserManager {
                         }
                     }
                 }
+                //set the totalResults value in index 0
+                users.set(0, users.size()-1);
             }
         } catch (UserStoreException e) {
             throw new CharonException("Error while retrieving users from user store..", e);
         }
         log.info("User list is retrieved through SCIM.");
         return users;
-    }
-
-    @Override
-    public List<User> listUsersWithPagination(int i, int i1) throws NotImplementedException {
-        String error = "Pagination is not supported";
-        throw new NotImplementedException(error);
-    }
-
-    @Override
-    public int getUserCount() throws NotImplementedException {
-        String error = "Counting is not supported";
-        throw new NotImplementedException(error);
     }
 
     @Override
@@ -370,8 +380,7 @@ public class SCIMUserManager implements UserManager {
         }
     }
 
-    @Override
-    public List<User> filterUsers(Node node) throws NotImplementedException, CharonException {
+    private List<Object> filterUsers(Node node) throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
@@ -390,7 +399,9 @@ public class SCIMUserManager implements UserManager {
             log.debug("Listing users by filter: " + attributeName + filterOperation +
                     attributeValue);
         }
-        List<User> filteredUsers = new ArrayList<>();
+        List<Object> filteredUsers = new ArrayList<>();
+        //0th index is to store total number of results
+        filteredUsers.add(0);
         ClaimMapping[] userClaims;
         ClaimMapping[] coreClaims;
         User scimUser = null;
@@ -408,7 +419,7 @@ public class SCIMUserManager implements UserManager {
                     log.debug("Users with filter: " + attributeName + filterOperation +
                             attributeValue + " does not exist in the system.");
                 }
-                return Collections.emptyList();
+                return filteredUsers;
             } else {
                 //get claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
@@ -420,6 +431,7 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
+
                 for (String userName : userNames) {
 
                     if (CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME.equals(userName)) {
@@ -436,6 +448,8 @@ public class SCIMUserManager implements UserManager {
                 log.info("Users filtered through SCIM for the filter: " + attributeName + filterOperation +
                         attributeValue);
             }
+            //set the total results
+            filteredUsers.set(0, filteredUsers.size() -1);
         } catch (UserStoreException | CharonException e) {
             throw new CharonException("Error in filtering users by attribute name : " + attributeName + ", " +
                             "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
@@ -443,14 +457,10 @@ public class SCIMUserManager implements UserManager {
         return filteredUsers;
     }
 
-    @Override
-    public List<User> sortUsers(String s, String s1) throws NotImplementedException {
-        String error = "Sorting is not supported";
-        throw new NotImplementedException(error);
-    }
 
     @Override
-    public User getMe(String userName) throws CharonException, NotFoundException {
+    public User getMe(String userName)
+            throws CharonException, NotFoundException {
         if (log.isDebugEnabled()) {
             log.debug("Deleting user: " + userName);
         }
@@ -495,40 +505,8 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public void deleteMe(String userName) throws NotFoundException, CharonException, NotImplementedException {
-        if (log.isDebugEnabled()) {
-            log.debug("Deleting user: " + userName);
-        }
-        User scimUser = null;
-        ClaimMapping[] coreClaims;
-        ClaimMapping[] userClaims;
-        try {
-            //get Claims related to SCIM claim dialect
-            coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-            userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
-            List<String> claimURIList = new ArrayList<>();
-            for (ClaimMapping claim : coreClaims) {
-                claimURIList.add(claim.getClaim().getClaimUri());
-            }
-            for (ClaimMapping claim : userClaims) {
-                claimURIList.add(claim.getClaim().getClaimUri());
-            }
-            //we assume (since id is unique per user) only one user exists for a given id
-            scimUser = this.getSCIMUser(userName, claimURIList);
-
-            if(scimUser == null){
-                log.debug("User with userName : " + userName + " does not exist in the system.");
-                throw new NotFoundException();
-            }else {
-            /*set thread local property to signal the downstream SCIMUserOperationListener
-                about the provisioning route.*/
-                SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
-                //we assume (since id is unique per user) only one user exists for a given id
-                carbonUM.deleteUser(userName);
-                log.info("User: " + userName + " is deleted through SCIM.");
-            }
-        } catch (UserStoreException e) {
-            throw new CharonException("Error in deleting user: " + userName, e);
-        }
+        String error = "Self delete is not supported";
+        throw new NotImplementedException(error);
     }
 
     @Override
@@ -730,7 +708,11 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Group> listGroups() throws CharonException {
+    public List<Object> listGroupsWithGET(Node node, int i, int i1, String s, String s1) throws CharonException, NotImplementedException, BadRequestException {
+        return null;
+    }
+
+    private List<Group> listGroups() throws CharonException {
         List<Group> groupList = new ArrayList<>();
         try {
             SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
@@ -751,20 +733,9 @@ public class SCIMUserManager implements UserManager {
         return groupList;
     }
 
-    @Override
-    public int getGroupCount() throws NotImplementedException {
-        String error = "Counting is not supported";
-        throw new NotImplementedException(error);
-    }
 
-    @Override
-    public List<Group> listGroupsWithPagination(int i, int i1) throws NotImplementedException {
-        String error = "Pagination is not supported";
-        throw new NotImplementedException(error);
-    }
-
-    @Override
-    public List<Group> filterGroups(Node node) throws NotImplementedException, CharonException {
+    private List<Group> filterGroups(Node node)
+            throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
@@ -823,14 +794,11 @@ public class SCIMUserManager implements UserManager {
         return filteredGroups;
     }
 
-    @Override
-    public List<Group> sortGroups(String s, String s1) throws NotImplementedException {
-        String error = "Sorting is not supported";
-        throw new NotImplementedException(error);
-    }
 
     @Override
-    public Group updateGroup(Group oldGroup, Group newGroup) throws CharonException {
+    public Group updateGroup(
+            Group oldGroup, Group newGroup)
+            throws CharonException {
         String displayName = null;
         try {
             String userStoreDomainFromSP = getUserStoreDomainFromSP();
@@ -979,6 +947,13 @@ public class SCIMUserManager implements UserManager {
         }
 
         return newGroup;
+    }
+
+    @Override
+    public List<Object> listGroupsWithPost(SearchRequest searchRequest)
+            throws NotImplementedException, BadRequestException, CharonException {
+        String error = "Querying with POST is not supported";
+        throw new NotImplementedException(error);
     }
 
 
@@ -1166,6 +1141,34 @@ public class SCIMUserManager implements UserManager {
             }
         }
         return group;
+    }
+
+    private void removeClaimsFromList(List<String> claimURIList, ArrayList<String> excludedAttributes) {
+        ArrayList<String> tempList = new ArrayList<>();
+
+        for(String claim : claimURIList){
+            tempList.add(claim);
+        }
+
+        for(String claim : tempList){
+            if(excludedAttributes.contains(claim)){
+                claimURIList.remove(claim);
+            }
+        }
+    }
+
+    private void removeOtherClaimsFromList(List<String> claimURIList, ArrayList<String> attributes) {
+        ArrayList<String> tempList = new ArrayList<>();
+
+        for(String claim : claimURIList){
+            tempList.add(claim);
+        }
+
+        for(String claim : tempList){
+            if(!attributes.contains(claim)){
+                claimURIList.remove(claim);
+            }
+        }
     }
 }
 

@@ -81,9 +81,6 @@ public class IdentitySCIMManager {
     private void init() throws CharonException {
         //this is necessary to instantiate here as we need to encode exceptions if they occur.
         encoder = new JSONEncoder();
-        //register encoder,decoders in AbstractResourceEndpoint, since they are called with in the API
-        registerCoders();
-
         //Define endpoint urls to be used in Location Header
         endpointURLs.put(SCIMConstants.USER_ENDPOINT, SCIMCommonUtils.getSCIMUserURL());
         endpointURLs.put(SCIMConstants.GROUP_ENDPOINT, SCIMCommonUtils.getSCIMGroupURL());
@@ -145,15 +142,6 @@ public class IdentitySCIMManager {
         return scimUserManager;
     }
 
-    /**
-     * Register encoders and decoders in AbstractResourceEndpoint.
-     */
-    private void registerCoders() throws CharonException {
-        //set json encoder
-        AbstractResourceManager.setEncoder();
-        //set json decoder
-        AbstractResourceManager.setDecoder();
-    }
 
     /**
      * Resgister endpoint URLs in AbstractResourceEndpoint.

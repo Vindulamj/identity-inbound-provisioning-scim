@@ -38,6 +38,7 @@ import org.wso2.charon.core.v2.schema.SCIMConstants;
 
 import javax.annotation.processing.SupportedOptions;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -207,19 +208,61 @@ public class UserResource extends AbstractResource {
             UserResourceManager userResourceManager = new UserResourceManager();
 
             SCIMResponse scimResponse = null;
-            if (filter != null) {
-                scimResponse = userResourceManager.listByFilter(filter, userManager, attribute, excludedAttributes);
-            } else if ( filter == null && startIndex == 0 && count == 0 && sortBy == null) {
-                scimResponse = userResourceManager.list
-                        (userManager, attribute, excludedAttributes);
-            } else if (sortBy != null || sortOrder != null){
-                scimResponse = userResourceManager.listBySort
-                        (sortBy, sortOrder, userManager, attribute, excludedAttributes);
-            } else if(startIndex != 0 || count != 0) {
-                scimResponse = userResourceManager.listWithPagination
-                        (startIndex, count, userManager, attribute, excludedAttributes);
-            }
+
+            scimResponse = userResourceManager.listWithGET(userManager, filter, startIndex, count,
+                    sortBy, sortOrder, attribute, excludedAttributes);
+
             return new SupportUtils().buildResponse(scimResponse);
+        } catch (CharonException e) {
+            return handleCharonException(e, encoder);
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+    }
+
+    @POST
+    @Path("{/.search}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getUserByPost(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                                  @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                  String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        JSONEncoder encoder = null;
+        try {
+            IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
+
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if(!isValidInputFormat(inputFormat)){
+                String error = inputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+
+            if(!isValidOutputFormat(outputFormat)){
+                String error = outputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+            // obtain the encoder at this layer in case exceptions needs to be encoded.
+            encoder = identitySCIMManager.getEncoder();
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
+
+            // create charon-SCIM user resource manager and hand-over the request.
+            UserResourceManager userResourceManager = new UserResourceManager();
+
+            SCIMResponse scimResponse = null;
+
+            scimResponse = userResourceManager.listWithPOST(resourceString, userManager);
+
+            return new SupportUtils().buildResponse(scimResponse);
+
         } catch (CharonException e) {
             return handleCharonException(e, encoder);
         } catch (FormatNotSupportedException e) {
