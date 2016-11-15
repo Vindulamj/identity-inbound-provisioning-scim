@@ -221,11 +221,11 @@ public class UserResource extends AbstractResource {
     }
 
     @POST
-    @Path("{/.search}")
+    @Path("/.search")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getUserByPost(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
-                                  @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                                  String resourceString) {
+    public Response getUsersByPost(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                                   @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                   String resourceString) {
 
         String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
         JSONEncoder encoder = null;

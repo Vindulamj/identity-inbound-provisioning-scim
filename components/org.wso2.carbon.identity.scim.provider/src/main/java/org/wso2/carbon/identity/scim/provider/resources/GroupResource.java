@@ -15,6 +15,7 @@ import org.wso2.charon.core.v2.protocol.ResponseCodeConstants;
 import org.wso2.charon.core.v2.protocol.SCIMResponse;
 import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon.core.v2.protocol.endpoints.GroupResourceManager;
+import org.wso2.charon.core.v2.protocol.endpoints.UserResourceManager;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 
 import javax.ws.rs.*;
@@ -53,7 +54,48 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, GET.class.getSimpleName());
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
         requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
         return processRequest(requestAttributes);
+    }
+
+    @POST
+    @Path("/.search")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getGroupsByPOST(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                                    @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                    String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        try {
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidInputFormat(inputFormat)) {
+                String error = inputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+
+            Map<String, String> requestAttributes = new HashMap<>();
+            requestAttributes.put(SCIMProviderConstants.ACCEPT_HEADER, outputFormat);
+            requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
+            requestAttributes.put(SCIMProviderConstants.HTTP_VERB, POST.class.getSimpleName());
+            requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString );
+            requestAttributes.put(SCIMProviderConstants.SEARCH, "1");
+
+            return processRequest(requestAttributes);
+
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
     }
 
     @POST
@@ -92,6 +134,7 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
         requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
         return processRequest(requestAttributes);
     }
 
@@ -126,6 +169,7 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.COUNT, count);
         requestAttributes.put(SCIMProviderConstants.SORT_BY, sortBy);
         requestAttributes.put(SCIMProviderConstants.SORT_ORDER, sortOrder);
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
         return processRequest(requestAttributes);
     }
 
@@ -149,6 +193,7 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.ID, id);
         requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
         requestAttributes.put(SCIMProviderConstants.HTTP_VERB, DELETE.class.getSimpleName());
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
         return processRequest(requestAttributes);
     }
 
@@ -192,6 +237,7 @@ public class GroupResource extends AbstractResource {
         requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
         requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
         requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
         return processRequest(requestAttributes);
     }
 
@@ -203,6 +249,7 @@ public class GroupResource extends AbstractResource {
         String resourceString = requestAttributes.get(SCIMProviderConstants.RESOURCE_STRING);
         String attributes = requestAttributes.get(SCIMProviderConstants.ATTRIBUTES);
         String excludedAttributes = requestAttributes.get(SCIMProviderConstants.EXCLUDE_ATTRIBUTES);
+        String search = requestAttributes.get(SCIMProviderConstants.SEARCH);
 
         JSONEncoder encoder = null;
         try {
@@ -217,11 +264,17 @@ public class GroupResource extends AbstractResource {
             //create charon-SCIM group endpoint and hand-over the request.
             GroupResourceManager groupResourceManager = new GroupResourceManager();
             SCIMResponse scimResponse = null;
-
+            int startIndex = 0;
+            int count = 0;
             if (GET.class.getSimpleName().equals(httpVerb) && id == null) {
                 String filter = requestAttributes.get(SCIMProviderConstants.FILTER);
-                int startIndex = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.START_INDEX));
-                int count = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.COUNT));
+                if(requestAttributes.get(SCIMProviderConstants.START_INDEX) != null){
+                   startIndex = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.START_INDEX));
+                }
+                if(requestAttributes.get(SCIMProviderConstants.COUNT) != null){
+                   count = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.COUNT));
+                }
+
                 String sortBy = requestAttributes.get(SCIMProviderConstants.SORT_BY);
                 String sortOrder = requestAttributes.get(SCIMProviderConstants.SORT_ORDER);
 
@@ -230,6 +283,8 @@ public class GroupResource extends AbstractResource {
 
             } else if (GET.class.getSimpleName().equals(httpVerb)) {
                 scimResponse = groupResourceManager.get(id, userManager, attributes, excludedAttributes);
+            } else if (POST.class.getSimpleName().equals(httpVerb) && search.equals("1")){
+                scimResponse = groupResourceManager.listWithPOST(resourceString,userManager);
             } else if (POST.class.getSimpleName().equals(httpVerb)) {
                 scimResponse = groupResourceManager.create(resourceString, userManager, attributes, excludedAttributes);
             } else if (PUT.class.getSimpleName().equals(httpVerb)) {

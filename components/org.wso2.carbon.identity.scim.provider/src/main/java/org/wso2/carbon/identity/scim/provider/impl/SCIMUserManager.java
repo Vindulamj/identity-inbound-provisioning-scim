@@ -250,7 +250,8 @@ public class SCIMUserManager implements UserManager {
     @Override
     public List<Object> listUsersWithPost(SearchRequest searchRequest)
             throws CharonException, NotImplementedException, BadRequestException {
-        return null;
+        return listUsersWithGET(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
+                searchRequest.getSortBy(), searchRequest.getSortOder());
     }
 
     private List<Object> listUsers() throws CharonException {
@@ -708,12 +709,24 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Object> listGroupsWithGET(Node node, int i, int i1, String s, String s1) throws CharonException, NotImplementedException, BadRequestException {
-        return null;
+    public List<Object> listGroupsWithGET(Node rootNode, int startIndex,
+                                          int count, String sortBy, String sortOrder)
+            throws CharonException, NotImplementedException, BadRequestException {
+        if(sortBy != null || sortOrder != null) {
+            throw new NotImplementedException("Sorting is not supported");
+        }  else if(startIndex != 1){
+            throw new NotImplementedException("Pagination is not supported");
+        } else if(rootNode != null) {
+            return filterGroups(rootNode);
+        } else {
+            return listGroups();
+        }
     }
 
-    private List<Group> listGroups() throws CharonException {
-        List<Group> groupList = new ArrayList<>();
+    private List<Object> listGroups() throws CharonException {
+        List<Object> groupList = new ArrayList<>();
+        //0th index is to store total number of results;
+        groupList.add(0);
         try {
             SCIMGroupHandler groupHandler = new SCIMGroupHandler(carbonUM.getTenantId());
             Set<String> roleNames = groupHandler.listSCIMRoles();
@@ -730,11 +743,13 @@ public class SCIMUserManager implements UserManager {
         } catch (IdentitySCIMException | BadRequestException e) {
             throw new CharonException("Error in retrieving SCIM Group information from database.", e);
         }
+        //set the totalResults value in index 0
+        groupList.set(0, groupList.size()-1);
         return groupList;
     }
 
 
-    private List<Group> filterGroups(Node node)
+    private List<Object> filterGroups(Node node)
             throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
@@ -754,7 +769,9 @@ public class SCIMUserManager implements UserManager {
             log.debug("Listing groups with filter: " + attributeName + filterOperation +
                     attributeValue);
         }
-        List<Group> filteredGroups = new ArrayList<>();
+        List<Object> filteredGroups = new ArrayList<>();
+        //0th index is to store total number of results;
+        filteredGroups.add(0);
         Group group = null;
         try {
             if (attributeValue != null && carbonUM.isExistingRole(attributeValue, false)) {
@@ -778,7 +795,7 @@ public class SCIMUserManager implements UserManager {
                 filteredGroups.add(group);
             } else {
                 //returning null will send a resource not found error to client by Charon.
-                return Collections.emptyList();
+                return filteredGroups;
             }
         } catch (org.wso2.carbon.user.core.UserStoreException e) {
             throw new CharonException("Error in filtering groups by attribute name : " + attributeName + ", " +
@@ -791,6 +808,8 @@ public class SCIMUserManager implements UserManager {
         } catch (BadRequestException e) {
             throw new CharonException("Error in retrieving SCIM Group.", e);
         }
+        //set the totalResults value in index 0
+        filteredGroups.set(0, filteredGroups.size()-1);
         return filteredGroups;
     }
 
@@ -950,10 +969,9 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Object> listGroupsWithPost(SearchRequest searchRequest)
-            throws NotImplementedException, BadRequestException, CharonException {
-        String error = "Querying with POST is not supported";
-        throw new NotImplementedException(error);
+    public List<Object> listGroupsWithPost(SearchRequest searchRequest) throws BadRequestException, NotImplementedException, CharonException {
+        return listGroupsWithGET(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
+                searchRequest.getSortBy(), searchRequest.getSortOder());
     }
 
 
