@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.scim.provider.impl;
+package org.wso2.carbon.identity.scim.common.impl;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -30,8 +30,8 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.scim.common.group.SCIMGroupHandler;
 import org.wso2.carbon.identity.scim.common.utils.AttributeMapper;
 import org.wso2.carbon.identity.scim.common.utils.IdentitySCIMException;
+import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
-import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.user.api.ClaimMapping;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserCoreConstants;
@@ -165,8 +165,8 @@ public class SCIMUserManager implements UserManager {
                 return null;
             } else {
                 //get Claims related to SCIM claim dialect
-                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
@@ -265,8 +265,8 @@ public class SCIMUserManager implements UserManager {
             String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, "*", null);
             if (userNames != null && userNames.length != 0) {
                 //get Claims related to SCIM claim dialect
-                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
@@ -344,8 +344,8 @@ public class SCIMUserManager implements UserManager {
 
             ClaimMapping[] coreClaimList;
             ClaimMapping[] userClaimList;
-            coreClaimList = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-            userClaimList = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+            coreClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
+            userClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaimList) {
                 claimURIList.add(claim.getClaim().getClaimUri());
@@ -392,7 +392,7 @@ public class SCIMUserManager implements UserManager {
         String filterOperation = ((ExpressionNode)node).getOperation();
         String attributeValue = ((ExpressionNode)node).getValue();
 
-        if(!filterOperation.equalsIgnoreCase(SCIMProviderConstants.EQ)){
+        if(!filterOperation.equalsIgnoreCase(SCIMCommonConstants.EQ)){
             String error = "Filter operator "+ filterOperation +" is not implemented";
             throw new NotImplementedException(error);
         }
@@ -423,8 +423,8 @@ public class SCIMUserManager implements UserManager {
                 return filteredUsers;
             } else {
                 //get claims related to SCIM claim dialect
-                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-                userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+                coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
+                userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
@@ -470,8 +470,8 @@ public class SCIMUserManager implements UserManager {
         ClaimMapping[] userClaims;
         try {
             //get Claims related to SCIM claim dialect
-            coreClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_CORE_CLAIM_DIALECT);
-            userClaims = carbonClaimManager.getAllClaimMappings(SCIMProviderConstants.SCIM_USER_CLAIM_DIALECT);
+            coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
+            userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
@@ -760,7 +760,7 @@ public class SCIMUserManager implements UserManager {
         String filterOperation = ((ExpressionNode)node).getOperation();
         String attributeValue = ((ExpressionNode)node).getValue();
 
-        if(!filterOperation.equalsIgnoreCase(SCIMProviderConstants.EQ)){
+        if(!filterOperation.equalsIgnoreCase(SCIMCommonConstants.EQ)){
             String error = "Filter operator "+ filterOperation +" is not implemented";
             throw new NotImplementedException(error);
         }
@@ -1083,8 +1083,8 @@ public class SCIMUserManager implements UserManager {
      */
     private boolean isInternalOrApplicationGroup(String userstoreDomain){
         if(StringUtils.isNotBlank(userstoreDomain) &&
-                (SCIMProviderConstants.APPLICATION_DOMAIN.equalsIgnoreCase(userstoreDomain) ||
-                SCIMProviderConstants.INTERNAL_DOMAIN.equalsIgnoreCase(userstoreDomain))){
+                (SCIMCommonConstants.APPLICATION_DOMAIN.equalsIgnoreCase(userstoreDomain) ||
+                        SCIMCommonConstants.INTERNAL_DOMAIN.equalsIgnoreCase(userstoreDomain))){
             return true;
         }
         return false;

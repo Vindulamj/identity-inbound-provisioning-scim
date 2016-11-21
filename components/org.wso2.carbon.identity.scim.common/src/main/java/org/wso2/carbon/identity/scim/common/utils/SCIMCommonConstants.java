@@ -32,5 +32,36 @@ public class SCIMCommonConstants {
     public static final int USER = 1;
     public static final int GROUP = 2;
 
+    public static final String SCIM_CORE_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0";
+    public static final String SCIM_USER_CLAIM_DIALECT = "urn:ietf:params:scim:schemas:core:2.0:User";
+
+    public static final String EQ = "eq";
+
+    public static final String APPLICATION_DOMAIN = "Application";
+    public static final String INTERNAL_DOMAIN = "Internal";
+
+    //ServiceProviderConfigResource endpoint related constants
+
+    public static final String DOCUMENTATION_URL = "";
+    public static final int MAX_OPERATIONS = 1000;
+    public static final int MAX_PAYLOAD_SIZE = 1048576;
+    public static final int MAX_RESULTS = 200;
+    public static final int COUNT_FOR_PAGINATION = 2;
+
+    public static final String AUTHENTICATION_SCHEMES_NAME_1 = "OAuth Bearer Token";
+    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_1 =
+            "Authentication scheme using the OAuth Bearer Token Standard";
+    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_1 = "http://www.rfc-editor.org/info/rfc6750";
+    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1 = "http://example.com/help/oauth.html";
+    public static final String AUTHENTICATION_SCHEMES_TYPE_1 = "oauthbearertoken";
+    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_1 = true;
+
+    public static final String AUTHENTICATION_SCHEMES_NAME_2 = "HTTP Basic";
+    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_2 = "Authentication scheme using the HTTP Basic Standard";
+    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_2 = "http://www.rfc-editor.org/info/rfc2617";
+    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2 = "http://example.com/help/httpBasic.html";
+    public static final String AUTHENTICATION_SCHEMES_TYPE_2 = "httpbasic";
+    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_2 = false;
+
 }
 

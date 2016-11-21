@@ -77,7 +77,7 @@
             <artifactId>org.scim.common</artifactId>
             <version>3.0.0</version>
             <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/Test/identity-inbound-provisioning-scim/components/org.wso2.carbon.identity.scim.common/target/org.wso2.carbon.identity.scim.common-5.1.5.jar</systemPath>
+            <systemPath>/home/vindula/Desktop/C4 Final/identity-inbound-provisioning-scim/components/org.wso2.carbon.identity.scim.common/target/org.wso2.carbon.identity.scim.common-5.1.5.jar</systemPath>
         </dependency>
 
     </dependencies>

@@ -16,14 +16,14 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.scim.provider.impl;
+package org.wso2.carbon.identity.scim.common.impl;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
-import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -31,10 +31,8 @@ import org.wso2.carbon.user.core.claim.ClaimManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.charon.core.v2.config.CharonConfiguration;
-import org.wso2.charon.core.v2.encoder.JSONDecoder;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
 import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.exceptions.FormatNotSupportedException;
 import org.wso2.charon.core.v2.extensions.*;
 import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
@@ -158,30 +156,30 @@ public class IdentitySCIMManager {
     private void registerCharonConfig(){
         //config charon
         //this values will be used in /ServiceProviderConfigResource endpoint
-        CharonConfiguration.getInstance().setDocumentationURL(SCIMProviderConstants.DOCUMENTATION_URL);
+        CharonConfiguration.getInstance().setDocumentationURL(SCIMCommonConstants.DOCUMENTATION_URL);
         CharonConfiguration.getInstance().setBulkSupport(false,
-                                                         SCIMProviderConstants.MAX_OPERATIONS,
-                                                         SCIMProviderConstants.MAX_PAYLOAD_SIZE);
+                SCIMCommonConstants.MAX_OPERATIONS,
+                SCIMCommonConstants.MAX_PAYLOAD_SIZE);
         CharonConfiguration.getInstance().setSortSupport(false);
         CharonConfiguration.getInstance().setETagSupport(false);
         CharonConfiguration.getInstance().setChangePasswordSupport(true);
-        CharonConfiguration.getInstance().setFilterSupport(true, SCIMProviderConstants.MAX_RESULTS);
+        CharonConfiguration.getInstance().setFilterSupport(true, SCIMCommonConstants.MAX_RESULTS);
         CharonConfiguration.getInstance().setPatchSupport(false);
-        CharonConfiguration.getInstance().setCountValueForPagination(SCIMProviderConstants.COUNT_FOR_PAGINATION);
+        CharonConfiguration.getInstance().setCountValueForPagination(SCIMCommonConstants.COUNT_FOR_PAGINATION);
 
-        Object [] auth1 = {SCIMProviderConstants.AUTHENTICATION_SCHEMES_NAME_1,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_1,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_SPEC_URI_1,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_TYPE_1,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_PRIMARY_1};
+        Object [] auth1 = {SCIMCommonConstants.AUTHENTICATION_SCHEMES_NAME_1,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_1,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_SPEC_URI_1,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_TYPE_1,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_PRIMARY_1};
 
-        Object [] auth2 = {SCIMProviderConstants.AUTHENTICATION_SCHEMES_NAME_2,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_2,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_SPEC_URI_2,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_TYPE_2,
-                SCIMProviderConstants.AUTHENTICATION_SCHEMES_PRIMARY_2};
+        Object [] auth2 = {SCIMCommonConstants.AUTHENTICATION_SCHEMES_NAME_2,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_2,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_SPEC_URI_2,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_TYPE_2,
+                SCIMCommonConstants.AUTHENTICATION_SCHEMES_PRIMARY_2};
         ArrayList<Object[]> authList = new ArrayList<Object[]>();
         authList.add(auth1);
         authList.add(auth2);

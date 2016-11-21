@@ -20,11 +20,11 @@ package org.wso2.carbon.identity.scim.provider.impl;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
 import org.wso2.charon.core.v2.exceptions.CharonException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import java.util.List;
 
 /**
  * This performs one-time initialization tasks at the application startup.

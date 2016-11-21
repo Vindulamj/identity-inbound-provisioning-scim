@@ -3,7 +3,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
+import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
 import org.wso2.charon.core.v2.exceptions.CharonException;

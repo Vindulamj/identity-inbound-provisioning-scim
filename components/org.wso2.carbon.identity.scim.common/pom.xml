@@ -83,8 +83,17 @@
             <scope>system</scope>
             <systemPath>/home/vindula/Desktop/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.carbon.identity</groupId>
+            <artifactId>org.wso2.carbon.identity.application.common</artifactId>
+            <version>${identity.framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>20030203.000129</version>
+        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

@@ -3,7 +3,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.scim.provider.impl.IdentitySCIMManager;
+import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
@@ -269,10 +269,10 @@ public class GroupResource extends AbstractResource {
             if (GET.class.getSimpleName().equals(httpVerb) && id == null) {
                 String filter = requestAttributes.get(SCIMProviderConstants.FILTER);
                 if(requestAttributes.get(SCIMProviderConstants.START_INDEX) != null){
-                   startIndex = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.START_INDEX));
+                    startIndex = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.START_INDEX));
                 }
                 if(requestAttributes.get(SCIMProviderConstants.COUNT) != null){
-                   count = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.COUNT));
+                    count = Integer.parseInt(requestAttributes.get(SCIMProviderConstants.COUNT));
                 }
 
                 String sortBy = requestAttributes.get(SCIMProviderConstants.SORT_BY);
