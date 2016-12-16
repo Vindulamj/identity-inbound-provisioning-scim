@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.jaxrs.designator.PATCH;
 import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
@@ -306,6 +307,59 @@ public class UserResource extends AbstractResource {
             UserResourceManager userResourceEndpoint = new UserResourceManager();
 
             SCIMResponse response = userResourceEndpoint.updateWithPUT(
+                    id, resourceString, userManager, attribute, excludedAttributes);
+
+            return new SupportUtils().buildResponse(response);
+
+        } catch (CharonException e) {
+            return handleCharonException(e, encoder);
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+    }
+
+    @PATCH
+    @Path("{id}")
+    public Response patchUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                               @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                               @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
+                               @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                               String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+
+        JSONEncoder encoder = null;
+        try {
+            // obtain default charon manager
+            IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
+
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if(!isValidInputFormat(inputFormat)){
+                String error = inputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+
+            if(!isValidOutputFormat(outputFormat)){
+                String error = outputFormat + " is not supported.";
+                throw  new FormatNotSupportedException(error);
+            }
+            // obtain the encoder at this layer in case exceptions needs to be encoded.
+            encoder = identitySCIMManager.getEncoder();
+
+            // obtain the user store manager
+            UserManager userManager = IdentitySCIMManager.getInstance().getUserManager(userName);
+
+            // create charon-SCIM user endpoint and hand-over the request.
+            UserResourceManager userResourceEndpoint = new UserResourceManager();
+
+            SCIMResponse response = userResourceEndpoint.updateWithPATCH(
                     id, resourceString, userManager, attribute, excludedAttributes);
 
             return new SupportUtils().buildResponse(response);

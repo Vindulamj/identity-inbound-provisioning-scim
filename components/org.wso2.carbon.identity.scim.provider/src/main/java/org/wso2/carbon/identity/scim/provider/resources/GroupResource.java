@@ -3,6 +3,7 @@ package org.wso2.carbon.identity.scim.provider.resources;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.jaxrs.designator.PATCH;
 import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
@@ -241,6 +242,50 @@ public class GroupResource extends AbstractResource {
         return processRequest(requestAttributes);
     }
 
+    @PATCH
+    @Path("{id}")
+    public Response patchGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                                @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
+                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                                String resourceString) {
+
+        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+
+        try {
+            // content-type header is compulsory in post request.
+            if (inputFormat == null) {
+                String error = SCIMProviderConstants.CONTENT_TYPE
+                        + " not present in the request header";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidInputFormat(inputFormat)) {
+                String error = inputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+
+            if (!isValidOutputFormat(outputFormat)) {
+                String error = outputFormat + " is not supported.";
+                throw new FormatNotSupportedException(error);
+            }
+        } catch (FormatNotSupportedException e) {
+            return handleFormatNotSupportedException(e);
+        }
+
+
+        Map<String, String> requestAttributes = new HashMap<>();
+        requestAttributes.put(SCIMProviderConstants.ID, id);
+        requestAttributes.put(SCIMProviderConstants.AUTHORIZATION, userName);
+        requestAttributes.put(SCIMProviderConstants.HTTP_VERB, PATCH.class.getSimpleName());
+        requestAttributes.put(SCIMProviderConstants.RESOURCE_STRING, resourceString);
+        requestAttributes.put(SCIMProviderConstants.ATTRIBUTES, attribute);
+        requestAttributes.put(SCIMProviderConstants.EXCLUDE_ATTRIBUTES, excludedAttributes);
+        requestAttributes.put(SCIMProviderConstants.SEARCH, "0");
+        return processRequest(requestAttributes);
+    }
+
     private Response processRequest(final Map<String, String> requestAttributes) {
 
         String id = requestAttributes.get(SCIMProviderConstants.ID);
@@ -290,6 +335,9 @@ public class GroupResource extends AbstractResource {
             } else if (PUT.class.getSimpleName().equals(httpVerb)) {
                 scimResponse =
                         groupResourceManager.updateWithPUT(id, resourceString, userManager, attributes, excludedAttributes);
+            } else if (PATCH.class.getSimpleName().equals(httpVerb)) {
+                scimResponse =
+                        groupResourceManager.updateWithPATCH(id, resourceString, userManager, attributes, excludedAttributes);
             } else if (DELETE.class.getSimpleName().equals(httpVerb)) {
                 scimResponse = groupResourceManager.delete(id, userManager);
             }
