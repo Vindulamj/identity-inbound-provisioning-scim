@@ -652,7 +652,7 @@ public class SCIMUserManager implements UserManager {
                                 }
                             }
                             if (!userContains) {
-                                throw new IdentitySCIMException("Given SCIM user Id and name not matching..");
+                                throw new IdentitySCIMException("Given SCIM user Id and name does not match..");
                             }
                         }
                     }
@@ -680,9 +680,9 @@ public class SCIMUserManager implements UserManager {
             }
             throw new CharonException("Error occurred while adding role : " + group.getDisplayName(), e);
         } catch (IdentitySCIMException | BadRequestException e) {
-            String error = "Member doesn't exist in the same user store. " +
+            String error = "One or more roup members do not exist in the same user store. " +
                     "Hence, can not create the group: " + group.getDisplayName();
-            throw new BadRequestException(ResponseCodeConstants.INVALID_VALUE,error);
+            throw new BadRequestException(error, ResponseCodeConstants.INVALID_VALUE);
         }
         return group;
     }
