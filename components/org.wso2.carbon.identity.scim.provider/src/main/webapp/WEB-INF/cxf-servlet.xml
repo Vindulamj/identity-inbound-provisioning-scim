@@ -71,4 +71,3 @@
     <bean id="ResourceTypeBean" class="org.wso2.carbon.identity.scim.provider.resources.RecourceTypeResource"/>
 
 </beans>
-

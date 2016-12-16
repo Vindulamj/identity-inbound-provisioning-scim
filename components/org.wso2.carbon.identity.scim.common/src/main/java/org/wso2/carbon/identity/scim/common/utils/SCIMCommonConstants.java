@@ -49,10 +49,11 @@ public class SCIMCommonConstants {
 
     public static final String BULK_SUPPORTED = "bulk-supported";
     public static final String SORT_SUPPORTED = "sort-supported";
+    public static final String PATCH_SUPPORTED = "patch-supported";
     public static final String ETAG_SUPPORTED = "etag-supported";
     public static final String FILTER_SUPPORTED = "filter-supported";
     public static final String CHNAGE_PASSWORD_SUPPORTED = "changePassword-supported";
-    public static final String DOCUMENTATION_URL = "documentationURL";
+    public static final String DOCUMENTATION_URL = "documentationUri";
     public static final String BULK_MAX_OPERATIONS = "bulk-maxOperations";
     public static final String BULK_MAX_PAYLOAD_SIZE = "bulk-maxPayloadSize";
     public static final String FILTER_MAX_RESULTS = "filter-maxResults";

@@ -170,6 +170,8 @@ public class IdentitySCIMManager {
                             Integer.parseInt(scimConfigProcessor.getProperty(SCIMCommonConstants.BULK_MAX_PAYLOAD_SIZE)));
             charonConfiguration.setSortSupport
                     (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.SORT_SUPPORTED)));
+            charonConfiguration.setPatchSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.PATCH_SUPPORTED)));
             charonConfiguration.setETagSupport
                     (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.ETAG_SUPPORTED)));
             charonConfiguration.setChangePasswordSupport

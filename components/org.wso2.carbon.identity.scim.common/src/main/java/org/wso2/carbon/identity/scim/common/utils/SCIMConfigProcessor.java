@@ -42,7 +42,7 @@ public class SCIMConfigProcessor {
     //list to keep the authentication schemas
     List<AuthenticationSchema> authenticationSchemas = null;
 
-    private Log logger = LogFactory.getLog(org.wso2.charon.core.v2.config.SCIMConfigProcessor.class);
+    private Log logger = LogFactory.getLog(SCIMConfigProcessor.class);
 
     public Map<String, String> getProperties() {
         return properties;
@@ -50,7 +50,7 @@ public class SCIMConfigProcessor {
 
     public String getProperty(String property) {
         if (properties.get(property) != null) {
-            properties.get(property);
+            return properties.get(property);
         }
         return null;
     }

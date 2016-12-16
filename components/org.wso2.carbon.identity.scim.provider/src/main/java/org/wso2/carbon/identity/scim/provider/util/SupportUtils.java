@@ -58,7 +58,7 @@ public class SupportUtils {
      * @param encodedString
      * @return
      */
-    public static String decodeBase64(String encodedString){
+    public static String getUserNameFromBase64EncodedString(String encodedString){
         // decode it and extract username and password
         byte[] decodedAuthHeader = Base64.decode(encodedString.split(" ")[1]);
         String authHeader = new String(decodedAuthHeader);

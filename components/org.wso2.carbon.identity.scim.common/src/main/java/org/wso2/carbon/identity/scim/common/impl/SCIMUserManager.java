@@ -151,7 +151,7 @@ public class SCIMUserManager implements UserManager {
         try {
             ClaimMapping[] coreClaims;
             ClaimMapping[] userClaims;
-            ClaimMapping[] extensionClaims;
+            ClaimMapping[] extensionClaims = null;
             //get the user name of the user with this id
             String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, userId,
                     UserCoreConstants.DEFAULT_PROFILE);
@@ -170,8 +170,10 @@ public class SCIMUserManager implements UserManager {
                 //get Claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
-                extensionClaims = carbonClaimManager.getAllClaimMappings(
-                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                if (SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema() != null){
+                    extensionClaims = carbonClaimManager.getAllClaimMappings(
+                            SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                }
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
@@ -179,8 +181,10 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
-                for (ClaimMapping claim : extensionClaims) {
-                    claimURIList.add(claim.getClaim().getClaimUri());
+                if(extensionClaims != null) {
+                    for (ClaimMapping claim : extensionClaims) {
+                        claimURIList.add(claim.getClaim().getClaimUri());
+                    }
                 }
 
                 //we assume (since id is unique per user) only one user exists for a given id
@@ -267,7 +271,7 @@ public class SCIMUserManager implements UserManager {
 
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
-        ClaimMapping[] extensionClaims;
+        ClaimMapping[] extensionClaims = null;
         List<Object> users = new ArrayList<>();
         //0th index is to store total number of results;
         users.add(0);
@@ -277,8 +281,10 @@ public class SCIMUserManager implements UserManager {
                 //get Claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
-                extensionClaims = carbonClaimManager.getAllClaimMappings(
-                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                if (SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema() != null){
+                    extensionClaims = carbonClaimManager.getAllClaimMappings(
+                            SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                }
 
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
@@ -287,8 +293,10 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
-                for (ClaimMapping claim : extensionClaims) {
-                    claimURIList.add(claim.getClaim().getClaimUri());
+                if(extensionClaims != null) {
+                    for (ClaimMapping claim : extensionClaims) {
+                        claimURIList.add(claim.getClaim().getClaimUri());
+                    }
                 }
 
                 for (String userName : userNames) {
@@ -360,11 +368,13 @@ public class SCIMUserManager implements UserManager {
 
             ClaimMapping[] coreClaimList;
             ClaimMapping[] userClaimList;
-            ClaimMapping[] extensionClaims;
+            ClaimMapping[] extensionClaims = null;
             coreClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
             userClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
-            extensionClaims = carbonClaimManager.getAllClaimMappings(
-                    SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+            if (SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema() != null){
+                extensionClaims = carbonClaimManager.getAllClaimMappings(
+                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+            }
 
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaimList) {
@@ -373,8 +383,10 @@ public class SCIMUserManager implements UserManager {
             for (ClaimMapping claim : userClaimList) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
-            for (ClaimMapping claim : extensionClaims) {
-                claimURIList.add(claim.getClaim().getClaimUri());
+            if(extensionClaims != null) {
+                for (ClaimMapping claim : extensionClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
             }
             Map<String, String> oldClaimList = carbonUM.getUserClaimValues(user.getUserName(), claimURIList
                     .toArray(new String[claimURIList.size()]), null);
@@ -428,7 +440,7 @@ public class SCIMUserManager implements UserManager {
         filteredUsers.add(0);
         ClaimMapping[] userClaims;
         ClaimMapping[] coreClaims;
-        ClaimMapping[] extensionClaims;
+        ClaimMapping[] extensionClaims = null;
 
         User scimUser = null;
         try {
@@ -450,8 +462,10 @@ public class SCIMUserManager implements UserManager {
                 //get claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
-                extensionClaims = carbonClaimManager.getAllClaimMappings(
-                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                if (SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema() != null){
+                    extensionClaims = carbonClaimManager.getAllClaimMappings(
+                            SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+                }
 
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
@@ -460,8 +474,10 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
-                for (ClaimMapping claim : extensionClaims) {
-                    claimURIList.add(claim.getClaim().getClaimUri());
+                if(extensionClaims != null) {
+                    for (ClaimMapping claim : extensionClaims) {
+                        claimURIList.add(claim.getClaim().getClaimUri());
+                    }
                 }
                 for (String userName : userNames) {
 
@@ -498,15 +514,16 @@ public class SCIMUserManager implements UserManager {
         User scimUser = null;
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
-        ClaimMapping[] extensionClaims;
+        ClaimMapping[] extensionClaims = null;
 
         try {
             //get Claims related to SCIM claim dialect
             coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
             userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
-            extensionClaims = carbonClaimManager.getAllClaimMappings(
-                    SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
-
+            if (SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema() != null){
+                extensionClaims = carbonClaimManager.getAllClaimMappings(
+                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+            }
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
@@ -514,8 +531,10 @@ public class SCIMUserManager implements UserManager {
             for (ClaimMapping claim : userClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
-            for (ClaimMapping claim : extensionClaims) {
-                claimURIList.add(claim.getClaim().getClaimUri());
+            if(extensionClaims != null) {
+                for (ClaimMapping claim : extensionClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
             }
             //we assume (since id is unique per user) only one user exists for a given id
             scimUser = this.getSCIMUser(userName, claimURIList);

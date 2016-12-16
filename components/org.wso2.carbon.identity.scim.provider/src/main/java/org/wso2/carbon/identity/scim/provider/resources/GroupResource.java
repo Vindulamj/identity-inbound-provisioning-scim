@@ -33,11 +33,12 @@ public class GroupResource extends AbstractResource {
     @Path("{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                             @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                              @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                              @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                              @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -62,11 +63,13 @@ public class GroupResource extends AbstractResource {
     @POST
     @Path("/.search")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getGroupsByPOST(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+    public Response getGroupsByPOST(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                                    @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                     @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                     String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
+
         try {
             // content-type header is compulsory in post request.
             if (inputFormat == null) {
@@ -100,13 +103,14 @@ public class GroupResource extends AbstractResource {
     }
 
     @POST
-    public Response createGroup(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+    public Response createGroup(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                                @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                 @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                 @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                 String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
             // content-type header is compulsory in post request.
@@ -140,7 +144,8 @@ public class GroupResource extends AbstractResource {
     }
 
     @GET
-    public Response getGroup(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+    public Response getGroup(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                             @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                              @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                              @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                              @QueryParam(SCIMProviderConstants.FILTER) String filter,
@@ -149,7 +154,7 @@ public class GroupResource extends AbstractResource {
                              @QueryParam(SCIMProviderConstants.SORT_BY) String sortBy,
                              @QueryParam(SCIMProviderConstants.SORT_ORDER) String sortOrder) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -177,9 +182,10 @@ public class GroupResource extends AbstractResource {
     @DELETE
     @Path("{id}")
     public Response deleteGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
             if (!isValidOutputFormat(outputFormat)) {
@@ -201,16 +207,17 @@ public class GroupResource extends AbstractResource {
     @PUT
     @Path("{id}")
     public Response updateGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                                @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                                 @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
                                 @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                 @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                 @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                 String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
-            // content-type header is compulsory in post request.
+            // content-type header is compulsory in put request.
             if (inputFormat == null) {
                 String error = SCIMProviderConstants.CONTENT_TYPE
                         + " not present in the request header";
@@ -245,16 +252,17 @@ public class GroupResource extends AbstractResource {
     @PATCH
     @Path("{id}")
     public Response patchGroup(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
-                                @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
-                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
-                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
-                                String resourceString) {
+                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                               @HeaderParam(SCIMConstants.CONTENT_TYPE_HEADER) String inputFormat,
+                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                               @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
+                               @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                               String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         try {
-            // content-type header is compulsory in post request.
+            // content-type header is compulsory in patch request.
             if (inputFormat == null) {
                 String error = SCIMProviderConstants.CONTENT_TYPE
                         + " not present in the request header";

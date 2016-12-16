@@ -22,7 +22,7 @@
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath>../../pom.xml</relativePath>
-        <version>5.1.2</version>
+        <version>5.1.5</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -36,6 +36,7 @@
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
             <artifactId>org.wso2.carbon.identity.scim.common</artifactId>
+            <version>5.1.5</version>
         </dependency>
     </dependencies>
 

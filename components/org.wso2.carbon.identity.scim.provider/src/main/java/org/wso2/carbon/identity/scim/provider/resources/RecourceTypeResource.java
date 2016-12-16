@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.scim.common.impl.IdentitySCIMManager;
+import org.wso2.carbon.identity.scim.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.provider.util.SupportUtils;
 import org.wso2.charon.core.v2.encoder.JSONEncoder;
 import org.wso2.charon.core.v2.exceptions.CharonException;
@@ -27,7 +28,7 @@ public class RecourceTypeResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser() {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SCIMProviderConstants.DEFAULT_USERNAME;
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();

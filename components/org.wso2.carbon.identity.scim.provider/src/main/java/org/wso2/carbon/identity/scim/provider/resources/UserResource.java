@@ -45,11 +45,12 @@ public class UserResource extends AbstractResource {
     @Path("{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                            @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                             @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                             @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                             @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -80,13 +81,14 @@ public class UserResource extends AbstractResource {
     }
 
     @POST
-    public Response createUser(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+    public Response createUser(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                               @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                @QueryParam(SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam(SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String  excludedAttributes,
                                String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         JSONEncoder encoder = null;
         try {
@@ -133,9 +135,10 @@ public class UserResource extends AbstractResource {
     @DELETE
     @Path("{id}")
     public Response deleteUser(@PathParam(SCIMProviderConstants.ID) String id,
+                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -171,7 +174,8 @@ public class UserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getUser(@HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
+    public Response getUser(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                            @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String format,
                             @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
                             @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                             @QueryParam (SCIMProviderConstants.FILTER) String filter,
@@ -180,7 +184,7 @@ public class UserResource extends AbstractResource {
                             @QueryParam (SCIMProviderConstants.SORT_BY) String sortBy,
                             @QueryParam (SCIMProviderConstants.SORT_ORDER) String sortOrder) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -218,11 +222,12 @@ public class UserResource extends AbstractResource {
     @POST
     @Path("/.search")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getUsersByPost(@HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+    public Response getUsersByPost(@HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                                   @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                    @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                    String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
         JSONEncoder encoder = null;
         try {
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
@@ -268,13 +273,14 @@ public class UserResource extends AbstractResource {
     @PUT
     @Path("{id}")
     public Response updateUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
+                               @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
                                @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
                                @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
                                @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
                                @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
                                String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         JSONEncoder encoder = null;
         try {
@@ -321,13 +327,14 @@ public class UserResource extends AbstractResource {
     @PATCH
     @Path("{id}")
     public Response patchUser(@PathParam(SCIMConstants.CommonSchemaConstants.ID) String id,
-                               @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
-                               @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
-                               @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
-                               @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
-                               String resourceString) {
+                              @HeaderParam(SCIMProviderConstants.AUTHORIZATION) String authorizationHeader,
+                              @HeaderParam(SCIMProviderConstants.CONTENT_TYPE) String inputFormat,
+                              @HeaderParam(SCIMProviderConstants.ACCEPT_HEADER) String outputFormat,
+                              @QueryParam (SCIMProviderConstants.ATTRIBUTES) String attribute,
+                              @QueryParam (SCIMProviderConstants.EXCLUDE_ATTRIBUTES) String excludedAttributes,
+                              String resourceString) {
 
-        String userName = CarbonContext.getThreadLocalCarbonContext().getUsername();
+        String userName = SupportUtils.getUserNameFromBase64EncodedString(authorizationHeader);
 
         JSONEncoder encoder = null;
         try {

@@ -16,15 +16,15 @@
  ~ limitations under the License.
  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
-        <relativePath>../../pom.xml</relativePath>
-        <version>5.1.2</version>
+        <relativePath> ../../pom.xml</relativePath>
+        <version>5.1.5</version>
     </parent>
 
+    <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.scim.provider</artifactId>
     <name>WSO2 Carbon - SCIM - Service Provider Component</name>
     <packaging>war</packaging>
@@ -44,40 +44,45 @@
             <groupId>org.wso2.carbon</groupId>
             <artifactId>org.wso2.carbon.utils</artifactId>
             <scope>provided</scope>
+            <version>4.4.7</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
             <artifactId>org.wso2.carbon.identity.oauth.stub</artifactId>
             <scope>provided</scope>
+            <version>5.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.inbound.auth.oauth2</groupId>
             <artifactId>org.wso2.carbon.identity.oauth</artifactId>
             <scope>provided</scope>
+            <version>5.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.core</artifactId>
             <scope>provided</scope>
+            <version>5.6.15</version>
         </dependency>
         <dependency>
             <groupId>org.wso2.carbon.identity.framework</groupId>
             <artifactId>org.wso2.carbon.identity.provisioning</artifactId>
             <scope>provided</scope>
+            <version>5.5.0</version>
         </dependency>
         <dependency>
             <groupId>Charon</groupId>
             <artifactId>org.charon</artifactId>
             <version>3.0.0</version>
             <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
+            <systemPath>/home/vindula/Desktop/C4/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>Common</groupId>
             <artifactId>org.scim.common</artifactId>
             <version>3.0.0</version>
             <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/C4 Final/identity-inbound-provisioning-scim/components/org.wso2.carbon.identity.scim.common/target/org.wso2.carbon.identity.scim.common-5.1.5.jar</systemPath>
+            <systemPath>/home/vindula/Desktop/C4/identity-inbound-provisioning-scim/components/org.wso2.carbon.identity.scim.common/target/org.wso2.carbon.identity.scim.common_5.1.12.jar</systemPath>
         </dependency>
 
     </dependencies>
