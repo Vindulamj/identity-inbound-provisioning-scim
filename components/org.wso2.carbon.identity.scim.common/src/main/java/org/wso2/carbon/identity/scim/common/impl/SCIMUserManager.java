@@ -879,6 +879,7 @@ public class SCIMUserManager implements UserManager {
     public Group updateGroup(Group oldGroup, Group newGroup, Map<String, Boolean> requiredAttributes)
             throws CharonException {
         String displayName = null;
+        displayName = oldGroup.getDisplayName();
         try {
             String userStoreDomainFromSP = getUserStoreDomainFromSP();
 
@@ -1015,9 +1016,9 @@ public class SCIMUserManager implements UserManager {
                 log.warn("There is no updated field in the group: " + oldGroup.getDisplayName() +
                         ". Therefore ignoring the provisioning.");
             }
-            displayName = oldGroup.getDisplayName();
+
         } catch (UserStoreException | IdentitySCIMException e) {
-            throw new CharonException("Error occurred while updating old group : " + displayName, e);
+            throw new CharonException(e.getMessage(), e);
         } catch (IdentityApplicationManagementException e){
             throw new CharonException("Error retrieving User Store name. ", e);
         } catch (BadRequestException | CharonException e) {
