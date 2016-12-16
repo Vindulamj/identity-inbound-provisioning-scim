@@ -23,12 +23,12 @@ import org.apache.commons.logging.LogFactory;
 import org.osgi.service.component.ComponentContext;
 import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.scim.common.listener.SCIMUserOperationListener;
+import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
+import org.wso2.carbon.identity.scim.common.utils.SCIMConfigProcessor;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.utils.CarbonUtils;
-import org.wso2.charon.core.v2.config.SCIMConfig;
 import org.wso2.charon.core.v2.config.SCIMConfigConstants;
-import org.wso2.charon.core.v2.config.SCIMConfigProcessor;
 import org.wso2.charon.core.v2.config.SCIMUserSchemaExtensionBuilder;
 import org.wso2.charon.core.v2.exceptions.CharonException;
 import org.wso2.charon.core.v2.exceptions.InternalErrorException;
@@ -52,13 +52,13 @@ public class SCIMCommonComponent {
     protected void activate(ComponentContext ctx) {
         try {
             String filePath = CarbonUtils.getCarbonConfigDirPath() + File.separator + "identity" + File.separator +
-                              SCIMConfigConstants.PROVISIONING_CONFIG_NAME;
+                              SCIMCommonConstants.PROVISIONING_CONFIG_NAME;
 
-            SCIMConfigProcessor scimConfigProcessor = new SCIMConfigProcessor();
-            SCIMConfig scimConfig = scimConfigProcessor.buildConfigFromFile(filePath);
+            SCIMConfigProcessor scimConfigProcessor = SCIMConfigProcessor.getInstance();
+            scimConfigProcessor.buildConfigFromFile(filePath);
 
             // reading user schema extension
-            if (Boolean.parseBoolean(scimConfig.getAdditionalPropertyValue("user-schema-extension-enabled"))) {
+            if (Boolean.parseBoolean(scimConfigProcessor.getProperty("user-schema-extension-enabled"))) {
                 String schemaFilePath =
                         CarbonUtils.getCarbonConfigDirPath() + File.separator +
                         SCIMConfigConstants.SCIM_SCHEMA_EXTENSION_CONFIG;

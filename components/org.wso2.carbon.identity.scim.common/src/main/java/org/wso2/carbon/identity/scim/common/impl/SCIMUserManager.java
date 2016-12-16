@@ -42,6 +42,7 @@ import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 import org.wso2.charon.core.v2.attributes.Attribute;
 import org.wso2.charon.core.v2.attributes.MultiValuedAttribute;
 import org.wso2.charon.core.v2.attributes.SimpleAttribute;
+import org.wso2.charon.core.v2.config.SCIMUserSchemaExtensionBuilder;
 import org.wso2.charon.core.v2.exceptions.*;
 import org.wso2.charon.core.v2.protocol.ResponseCodeConstants;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
@@ -69,7 +70,8 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User createUser(User user) throws CharonException, ConflictException, BadRequestException {
+    public User createUser(User user, Map<String, Boolean> requiredAttributes)
+            throws CharonException, ConflictException, BadRequestException {
         String userStoreName = null;
 
         try {
@@ -105,30 +107,30 @@ public class SCIMUserManager implements UserManager {
             carbonContext.getTenantId(true);
             carbonContext.setUsername(MultitenantUtils.getTenantAwareUsername(consumerName));
 
-                //Persist in carbon user store
-                if (log.isDebugEnabled()) {
-                    log.debug("Creating user: " + user.getUserName());
-                }
+            //Persist in carbon user store
+            if (log.isDebugEnabled()) {
+                log.debug("Creating user: " + user.getUserName());
+            }
                 /*set thread local property to signal the downstream SCIMUserOperationListener
                 about the provisioning route.*/
-                SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
-                Map<String, String> claimsMap = AttributeMapper.getClaimsMap(user);
+            SCIMCommonUtils.setThreadLocalIsManagedThroughSCIMEP(true);
+            Map<String, String> claimsMap = AttributeMapper.getClaimsMap(user);
 
                 /*skip groups attribute since we map groups attribute to actual groups in ldap.
                 and do not update it as an attribute in user schema*/
-                if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.GROUP_URI)) {
-                    claimsMap.remove(SCIMConstants.UserSchemaConstants.GROUP_URI);
-                }
+            if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.GROUP_URI)) {
+                claimsMap.remove(SCIMConstants.UserSchemaConstants.GROUP_URI);
+            }
 
-                if (carbonUM.isExistingUser(user.getUserName())) {
-                    String error = "User with the name: " + user.getUserName() + " already exists in the system.";
-                    throw new ConflictException(error);
-                }
-                if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.USER_NAME_URI)) {
-                    claimsMap.remove(SCIMConstants.UserSchemaConstants.USER_NAME_URI);
-                }
-                carbonUM.addUser(user.getUserName(), user.getPassword(), null, claimsMap, null);
-                log.info("User: " + user.getUserName() + " is created through SCIM.");
+            if (carbonUM.isExistingUser(user.getUserName())) {
+                String error = "User with the name: " + user.getUserName() + " already exists in the system.";
+                throw new ConflictException(error);
+            }
+            if (claimsMap.containsKey(SCIMConstants.UserSchemaConstants.USER_NAME_URI)) {
+                claimsMap.remove(SCIMConstants.UserSchemaConstants.USER_NAME_URI);
+            }
+            carbonUM.addUser(user.getUserName(), user.getPassword(), null, claimsMap, null);
+            log.info("User: " + user.getUserName() + " is created through SCIM.");
 
         } catch (UserStoreException e) {
             String errMsg = "Error in adding the user: " + user.getUserName() + " to the user store. ";
@@ -141,7 +143,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User getUser(String userId) throws CharonException {
+    public User getUser(String userId, Map<String, Boolean> requiredAttributes) throws CharonException {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving user: " + userId);
         }
@@ -149,6 +151,7 @@ public class SCIMUserManager implements UserManager {
         try {
             ClaimMapping[] coreClaims;
             ClaimMapping[] userClaims;
+            ClaimMapping[] extensionClaims;
             //get the user name of the user with this id
             String[] userNames = carbonUM.getUserList(SCIMConstants.CommonSchemaConstants.ID_URI, userId,
                     UserCoreConstants.DEFAULT_PROFILE);
@@ -167,11 +170,16 @@ public class SCIMUserManager implements UserManager {
                 //get Claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
+                extensionClaims = carbonClaimManager.getAllClaimMappings(
+                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
                 for (ClaimMapping claim : userClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (ClaimMapping claim : extensionClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
 
@@ -234,7 +242,8 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Object> listUsersWithGET(Node rootNode, int startIndex, int count, String sortBy, String sortOrder)
+    public List<Object> listUsersWithGET(Node rootNode, int startIndex, int count, String sortBy,
+                                         String sortOrder, Map<String, Boolean> requiredAttributes)
             throws CharonException, NotImplementedException, BadRequestException {
         if(sortBy != null || sortOrder != null) {
             throw new NotImplementedException("Sorting is not supported");
@@ -248,16 +257,17 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Object> listUsersWithPost(SearchRequest searchRequest)
+    public List<Object> listUsersWithPost(SearchRequest searchRequest, Map<String, Boolean> requiredAttributes)
             throws CharonException, NotImplementedException, BadRequestException {
         return listUsersWithGET(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
-                searchRequest.getSortBy(), searchRequest.getSortOder());
+                searchRequest.getSortBy(), searchRequest.getSortOder(), requiredAttributes);
     }
 
     private List<Object> listUsers() throws CharonException {
 
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
+        ClaimMapping[] extensionClaims;
         List<Object> users = new ArrayList<>();
         //0th index is to store total number of results;
         users.add(0);
@@ -267,11 +277,17 @@ public class SCIMUserManager implements UserManager {
                 //get Claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
+                extensionClaims = carbonClaimManager.getAllClaimMappings(
+                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
                 for (ClaimMapping claim : userClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
+                for (ClaimMapping claim : extensionClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
 
@@ -298,7 +314,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User updateUser(User user) throws CharonException {
+    public User updateUser(User user, Map<String, Boolean> requiredAttributes) throws CharonException {
         try {
             if (log.isDebugEnabled()) {
                 log.debug("Updating user: " + user.getUserName());
@@ -313,7 +329,7 @@ public class SCIMUserManager implements UserManager {
             //check if username of the updating user existing in the userstore.
             try {
                 String userStoreDomainFromSP = getUserStoreDomainFromSP();
-                User oldUser = this.getUser(user.getId());
+                User oldUser = this.getUser(user.getId(), null);
                 if (userStoreDomainFromSP != null && !userStoreDomainFromSP
                         .equalsIgnoreCase(IdentityUtil.extractDomainFromName(oldUser.getUserName()))) {
                     throw new CharonException("User :" + oldUser.getUserName() + "is not belong to user store " +
@@ -344,13 +360,20 @@ public class SCIMUserManager implements UserManager {
 
             ClaimMapping[] coreClaimList;
             ClaimMapping[] userClaimList;
+            ClaimMapping[] extensionClaims;
             coreClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
             userClaimList = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
+            extensionClaims = carbonClaimManager.getAllClaimMappings(
+                    SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaimList) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
             for (ClaimMapping claim : userClaimList) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            for (ClaimMapping claim : extensionClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
             Map<String, String> oldClaimList = carbonUM.getUserClaimValues(user.getUserName(), claimURIList
@@ -405,6 +428,8 @@ public class SCIMUserManager implements UserManager {
         filteredUsers.add(0);
         ClaimMapping[] userClaims;
         ClaimMapping[] coreClaims;
+        ClaimMapping[] extensionClaims;
+
         User scimUser = null;
         try {
             String[] userNames = null;
@@ -425,6 +450,9 @@ public class SCIMUserManager implements UserManager {
                 //get claims related to SCIM claim dialect
                 coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
                 userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
+                extensionClaims = carbonClaimManager.getAllClaimMappings(
+                        SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+
                 List<String> claimURIList = new ArrayList<>();
                 for (ClaimMapping claim : coreClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
@@ -432,7 +460,9 @@ public class SCIMUserManager implements UserManager {
                 for (ClaimMapping claim : userClaims) {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
-
+                for (ClaimMapping claim : extensionClaims) {
+                    claimURIList.add(claim.getClaim().getClaimUri());
+                }
                 for (String userName : userNames) {
 
                     if (CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME.equals(userName)) {
@@ -453,14 +483,14 @@ public class SCIMUserManager implements UserManager {
             filteredUsers.set(0, filteredUsers.size() -1);
         } catch (UserStoreException | CharonException e) {
             throw new CharonException("Error in filtering users by attribute name : " + attributeName + ", " +
-                            "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
+                    "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
         }
         return filteredUsers;
     }
 
 
     @Override
-    public User getMe(String userName)
+    public User getMe(String userName, Map<String, Boolean> requiredAttributes)
             throws CharonException, NotFoundException {
         if (log.isDebugEnabled()) {
             log.debug("Deleting user: " + userName);
@@ -468,15 +498,23 @@ public class SCIMUserManager implements UserManager {
         User scimUser = null;
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
+        ClaimMapping[] extensionClaims;
+
         try {
             //get Claims related to SCIM claim dialect
             coreClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_CORE_CLAIM_DIALECT);
             userClaims = carbonClaimManager.getAllClaimMappings(SCIMCommonConstants.SCIM_USER_CLAIM_DIALECT);
+            extensionClaims = carbonClaimManager.getAllClaimMappings(
+                    SCIMUserSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI());
+
             List<String> claimURIList = new ArrayList<>();
             for (ClaimMapping claim : coreClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
             for (ClaimMapping claim : userClaims) {
+                claimURIList.add(claim.getClaim().getClaimUri());
+            }
+            for (ClaimMapping claim : extensionClaims) {
                 claimURIList.add(claim.getClaim().getClaimUri());
             }
             //we assume (since id is unique per user) only one user exists for a given id
@@ -500,8 +538,9 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User createMe(User user) throws CharonException, ConflictException, BadRequestException {
-        return createUser(user);
+    public User createMe(User user, Map<String, Boolean> requiredAttributes)
+            throws CharonException, ConflictException, BadRequestException {
+        return createUser(user, requiredAttributes);
     }
 
     @Override
@@ -511,12 +550,14 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public User updateMe(User user) throws NotImplementedException, CharonException {
-        return updateUser(user);
+    public User updateMe(User user, Map<String, Boolean> requiredAttributes)
+            throws NotImplementedException, CharonException {
+        return updateUser(user, requiredAttributes);
     }
 
     @Override
-    public Group createGroup(Group group) throws CharonException, ConflictException, BadRequestException {
+    public Group createGroup(Group group, Map<String, Boolean> requiredAttributes)
+            throws CharonException, ConflictException, BadRequestException {
         if (log.isDebugEnabled()) {
             log.debug("Creating group: " + group.getDisplayName());
         }
@@ -628,7 +669,7 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public Group getGroup(String id) throws CharonException {
+    public Group getGroup(String id, Map<String, Boolean> requiredAttributes) throws CharonException {
         if (log.isDebugEnabled()) {
             log.debug("Retrieving group with id: " + id);
         }
@@ -710,7 +751,8 @@ public class SCIMUserManager implements UserManager {
 
     @Override
     public List<Object> listGroupsWithGET(Node rootNode, int startIndex,
-                                          int count, String sortBy, String sortOrder)
+                                          int count, String sortBy, String sortOrder,
+                                          Map<String, Boolean> requiredAttributes)
             throws CharonException, NotImplementedException, BadRequestException {
         if(sortBy != null || sortOrder != null) {
             throw new NotImplementedException("Sorting is not supported");
@@ -799,10 +841,10 @@ public class SCIMUserManager implements UserManager {
             }
         } catch (org.wso2.carbon.user.core.UserStoreException e) {
             throw new CharonException("Error in filtering groups by attribute name : " + attributeName + ", " +
-                        "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
+                    "attribute value : " + attributeValue + " and filter operation " + filterOperation, e);
         } catch (org.wso2.carbon.user.api.UserStoreException e) {
             throw new CharonException("Error in filtering group with filter: "
-                        + attributeName + filterOperation + attributeValue, e);
+                    + attributeName + filterOperation + attributeValue, e);
         } catch (IdentitySCIMException e) {
             throw new CharonException("Error in retrieving SCIM Group information from database.", e);
         } catch (BadRequestException e) {
@@ -815,8 +857,7 @@ public class SCIMUserManager implements UserManager {
 
 
     @Override
-    public Group updateGroup(
-            Group oldGroup, Group newGroup)
+    public Group updateGroup(Group oldGroup, Group newGroup, Map<String, Boolean> requiredAttributes)
             throws CharonException {
         String displayName = null;
         try {
@@ -969,9 +1010,10 @@ public class SCIMUserManager implements UserManager {
     }
 
     @Override
-    public List<Object> listGroupsWithPost(SearchRequest searchRequest) throws BadRequestException, NotImplementedException, CharonException {
+    public List<Object> listGroupsWithPost(SearchRequest searchRequest, Map<String, Boolean> requiredAttributes)
+            throws BadRequestException, NotImplementedException, CharonException {
         return listGroupsWithGET(searchRequest.getFilter(), searchRequest.getStartIndex(), searchRequest.getCount(),
-                searchRequest.getSortBy(), searchRequest.getSortOder());
+                searchRequest.getSortBy(), searchRequest.getSortOder(), requiredAttributes);
     }
 
 
@@ -1161,32 +1203,19 @@ public class SCIMUserManager implements UserManager {
         return group;
     }
 
-    private void removeClaimsFromList(List<String> claimURIList, ArrayList<String> excludedAttributes) {
-        ArrayList<String> tempList = new ArrayList<>();
+    private List<String> getMappedClaimList(Map<String, Boolean> requiredAttributes){
+        ArrayList<String> claimsList = new ArrayList<>();
 
-        for(String claim : claimURIList){
-            tempList.add(claim);
-        }
+        for(Map.Entry<String, Boolean> claim : requiredAttributes.entrySet()){
+            if(claim.getValue().equals(true)){
 
-        for(String claim : tempList){
-            if(excludedAttributes.contains(claim)){
-                claimURIList.remove(claim);
+
+            } else {
+                claimsList.add(claim.getKey());
             }
         }
-    }
 
-    private void removeOtherClaimsFromList(List<String> claimURIList, ArrayList<String> attributes) {
-        ArrayList<String> tempList = new ArrayList<>();
 
-        for(String claim : claimURIList){
-            tempList.add(claim);
-        }
-
-        for(String claim : tempList){
-            if(!attributes.contains(claim)){
-                claimURIList.remove(claim);
-            }
-        }
+        return claimsList;
     }
 }
-

@@ -22,8 +22,10 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.identity.scim.common.utils.AuthenticationSchema;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.identity.scim.common.utils.SCIMCommonUtils;
+import org.wso2.carbon.identity.scim.common.utils.SCIMConfigProcessor;
 import org.wso2.carbon.user.api.UserRealm;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
@@ -153,37 +155,44 @@ public class IdentitySCIMManager {
     /**
      * This create the basic operational configurations for charon
      */
-    private void registerCharonConfig(){
-        //config charon
-        //this values will be used in /ServiceProviderConfigResource endpoint
-        CharonConfiguration.getInstance().setDocumentationURL(SCIMCommonConstants.DOCUMENTATION_URL);
-        CharonConfiguration.getInstance().setBulkSupport(false,
-                SCIMCommonConstants.MAX_OPERATIONS,
-                SCIMCommonConstants.MAX_PAYLOAD_SIZE);
-        CharonConfiguration.getInstance().setSortSupport(false);
-        CharonConfiguration.getInstance().setETagSupport(false);
-        CharonConfiguration.getInstance().setChangePasswordSupport(true);
-        CharonConfiguration.getInstance().setFilterSupport(true, SCIMCommonConstants.MAX_RESULTS);
-        CharonConfiguration.getInstance().setPatchSupport(false);
-        CharonConfiguration.getInstance().setCountValueForPagination(SCIMCommonConstants.COUNT_FOR_PAGINATION);
+    private void registerCharonConfig() throws CharonException {
+        try {
 
-        Object [] auth1 = {SCIMCommonConstants.AUTHENTICATION_SCHEMES_NAME_1,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_1,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_SPEC_URI_1,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_TYPE_1,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_PRIMARY_1};
+            //config charon
+            //this values will be used in /ServiceProviderConfigResource endpoint and some default charon configs
+            CharonConfiguration charonConfiguration = CharonConfiguration.getInstance();
+            SCIMConfigProcessor scimConfigProcessor = SCIMConfigProcessor.getInstance();
+            charonConfiguration.setDocumentationURL
+                    (scimConfigProcessor.getProperty(SCIMCommonConstants.DOCUMENTATION_URL));
+            charonConfiguration.setBulkSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.BULK_SUPPORTED)),
+                            Integer.parseInt(scimConfigProcessor.getProperty(SCIMCommonConstants.BULK_MAX_OPERATIONS)),
+                            Integer.parseInt(scimConfigProcessor.getProperty(SCIMCommonConstants.BULK_MAX_PAYLOAD_SIZE)));
+            charonConfiguration.setSortSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.SORT_SUPPORTED)));
+            charonConfiguration.setETagSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.ETAG_SUPPORTED)));
+            charonConfiguration.setChangePasswordSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.CHNAGE_PASSWORD_SUPPORTED)));
+            charonConfiguration.setFilterSupport
+                    (Boolean.parseBoolean(scimConfigProcessor.getProperty(SCIMCommonConstants.FILTER_SUPPORTED)),
+                            Integer.parseInt(scimConfigProcessor.getProperty(SCIMCommonConstants.FILTER_MAX_RESULTS)));
 
-        Object [] auth2 = {SCIMCommonConstants.AUTHENTICATION_SCHEMES_NAME_2,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DESCRIPTION_2,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_SPEC_URI_2,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_TYPE_2,
-                SCIMCommonConstants.AUTHENTICATION_SCHEMES_PRIMARY_2};
-        ArrayList<Object[]> authList = new ArrayList<Object[]>();
-        authList.add(auth1);
-        authList.add(auth2);
-        CharonConfiguration.getInstance().setAuthenticationSchemes(authList);
+            ArrayList<Object[]> schemaList = new ArrayList<Object[]>();
+            for (AuthenticationSchema authenticationSchema : scimConfigProcessor.getAuthenticationSchemas()) {
+                Object[] schema = {authenticationSchema.getName(),
+                        authenticationSchema.getDescription(),
+                        authenticationSchema.getSpecUri(),
+                        authenticationSchema.getDocumentationUri(),
+                        authenticationSchema.getType(),
+                        authenticationSchema.getPrimary()};
+                schemaList.add(schema);
+            }
+
+            charonConfiguration.setAuthenticationSchemes(schemaList);
+        } catch (Exception e) {
+            throw new CharonException("Error in setting up charon configurations.", e);
+        }
     }
 
 }

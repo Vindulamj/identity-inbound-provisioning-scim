@@ -32,9 +32,7 @@ import org.wso2.charon.core.v2.protocol.SCIMResponse;
 import org.wso2.charon.core.v2.protocol.endpoints.UserResourceManager;
 import org.wso2.charon.core.v2.schema.SCIMConstants;
 
-import javax.annotation.processing.SupportedOptions;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 

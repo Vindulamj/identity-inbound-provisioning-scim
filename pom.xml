@@ -24,7 +24,7 @@
         <version>1</version>
     </parent>
 
-    <groupId>org.wso2.carbon.identity</groupId>
+    <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
     <artifactId>identity-inbound-provisioning-scim</artifactId>
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>

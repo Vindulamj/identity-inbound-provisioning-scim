@@ -40,28 +40,22 @@ public class SCIMCommonConstants {
     public static final String APPLICATION_DOMAIN = "Application";
     public static final String INTERNAL_DOMAIN = "Internal";
 
-    //ServiceProviderConfigResource endpoint related constants
+    //config constants
+    public static final String PROVISIONING_CONFIG_NAME = "provisioning-config.xml";
+    public static final String ELEMENT_NAME_AUTHENTICATION_SCHEMES = "authenticationSchemes";;
+    public static final String ELEMENT_NAME_PROPERTY = "Property";
+    public static final String ELEMENT_NAME_SCHEMA = "schema";
+    public static final String ATTRIBUTE_NAME_NAME = "name";
 
-    public static final String DOCUMENTATION_URL = "";
-    public static final int MAX_OPERATIONS = 1000;
-    public static final int MAX_PAYLOAD_SIZE = 1048576;
-    public static final int MAX_RESULTS = 200;
-    public static final int COUNT_FOR_PAGINATION = 2;
-
-    public static final String AUTHENTICATION_SCHEMES_NAME_1 = "OAuth Bearer Token";
-    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_1 =
-            "Authentication scheme using the OAuth Bearer Token Standard";
-    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_1 = "http://www.rfc-editor.org/info/rfc6750";
-    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_1 = "http://example.com/help/oauth.html";
-    public static final String AUTHENTICATION_SCHEMES_TYPE_1 = "oauthbearertoken";
-    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_1 = true;
-
-    public static final String AUTHENTICATION_SCHEMES_NAME_2 = "HTTP Basic";
-    public static final String AUTHENTICATION_SCHEMES_DESCRIPTION_2 = "Authentication scheme using the HTTP Basic Standard";
-    public static final String AUTHENTICATION_SCHEMES_SPEC_URI_2 = "http://www.rfc-editor.org/info/rfc2617";
-    public static final String AUTHENTICATION_SCHEMES_DOCUMENTATION_URL_2 = "http://example.com/help/httpBasic.html";
-    public static final String AUTHENTICATION_SCHEMES_TYPE_2 = "httpbasic";
-    public static final Boolean AUTHENTICATION_SCHEMES_PRIMARY_2 = false;
+    public static final String BULK_SUPPORTED = "bulk-supported";
+    public static final String SORT_SUPPORTED = "sort-supported";
+    public static final String ETAG_SUPPORTED = "etag-supported";
+    public static final String FILTER_SUPPORTED = "filter-supported";
+    public static final String CHNAGE_PASSWORD_SUPPORTED = "changePassword-supported";
+    public static final String DOCUMENTATION_URL = "documentationURL";
+    public static final String BULK_MAX_OPERATIONS = "bulk-maxOperations";
+    public static final String BULK_MAX_PAYLOAD_SIZE = "bulk-maxPayloadSize";
+    public static final String FILTER_MAX_RESULTS = "filter-maxResults";
 
 }
 
