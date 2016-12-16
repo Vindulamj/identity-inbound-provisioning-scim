@@ -186,9 +186,9 @@ public class SCIMUserManager implements UserManager {
                         claimURIList.add(claim.getClaim().getClaimUri());
                     }
                 }
-
+                List<String> requiredClaims = getOnlyRequiredClaims(claimURIList, requiredAttributes);
                 //we assume (since id is unique per user) only one user exists for a given id
-                scimUser = this.getSCIMUser(userNames[0], claimURIList);
+                scimUser = this.getSCIMUser(userNames[0], requiredClaims);
                 //set the schemas of the scim user
                 scimUser.setSchemas();
                 log.info("User: " + scimUser.getUserName() + " is retrieved through SCIM.");
@@ -254,9 +254,9 @@ public class SCIMUserManager implements UserManager {
         }  else if(startIndex != 1){
             throw new NotImplementedException("Pagination is not supported");
         } else if(rootNode != null) {
-            return filterUsers(rootNode);
+            return filterUsers(rootNode, requiredAttributes);
         } else {
-            return listUsers();
+            return listUsers(requiredAttributes);
         }
     }
 
@@ -267,7 +267,7 @@ public class SCIMUserManager implements UserManager {
                 searchRequest.getSortBy(), searchRequest.getSortOder(), requiredAttributes);
     }
 
-    private List<Object> listUsers() throws CharonException {
+    private List<Object> listUsers(Map<String, Boolean> requiredAttributes) throws CharonException {
 
         ClaimMapping[] coreClaims;
         ClaimMapping[] userClaims;
@@ -298,12 +298,12 @@ public class SCIMUserManager implements UserManager {
                         claimURIList.add(claim.getClaim().getClaimUri());
                     }
                 }
-
+                List<String> requiredClaims = getOnlyRequiredClaims(claimURIList, requiredAttributes);
                 for (String userName : userNames) {
                     if (userName.contains(UserCoreConstants.NAME_COMBINER)) {
                         userName = userName.split("\\" + UserCoreConstants.NAME_COMBINER)[0];
                     }
-                    User scimUser = this.getSCIMUser(userName, claimURIList);
+                    User scimUser = this.getSCIMUser(userName, requiredClaims);
                     if (scimUser != null) {
                         Map<String, Attribute> attrMap = scimUser.getAttributeList();
                         if (attrMap != null && !attrMap.isEmpty()) {
@@ -388,8 +388,10 @@ public class SCIMUserManager implements UserManager {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
             }
-            Map<String, String> oldClaimList = carbonUM.getUserClaimValues(user.getUserName(), claimURIList
-                    .toArray(new String[claimURIList.size()]), null);
+            List<String> requiredClaims = getOnlyRequiredClaims(claimURIList, requiredAttributes);
+
+            Map<String, String> oldClaimList = carbonUM.getUserClaimValues(user.getUserName(), requiredClaims
+                    .toArray(new String[requiredClaims.size()]), null);
 
             for (Map.Entry<String, String> entry : oldClaimList.entrySet()) {
                 if (!entry.getKey().equals(SCIMConstants.CommonSchemaConstants.ID_URI) &&
@@ -416,7 +418,8 @@ public class SCIMUserManager implements UserManager {
         }
     }
 
-    private List<Object> filterUsers(Node node) throws NotImplementedException, CharonException {
+    private List<Object> filterUsers(Node node, Map<String, Boolean> requiredAttributes)
+            throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
             String error = "Complex filters are not supported yet";
@@ -479,13 +482,14 @@ public class SCIMUserManager implements UserManager {
                         claimURIList.add(claim.getClaim().getClaimUri());
                     }
                 }
+                List<String> requiredClaims = getOnlyRequiredClaims(claimURIList, requiredAttributes);
                 for (String userName : userNames) {
 
                     if (CarbonConstants.REGISTRY_ANONNYMOUS_USERNAME.equals(userName)) {
                         continue;
                     }
 
-                    scimUser = this.getSCIMUser(userName, claimURIList);
+                    scimUser = this.getSCIMUser(userName, requiredClaims);
                     //if SCIM-ID is not present in the attributes, skip
                     if (scimUser != null && StringUtils.isBlank(scimUser.getId())) {
                         continue;
@@ -536,8 +540,9 @@ public class SCIMUserManager implements UserManager {
                     claimURIList.add(claim.getClaim().getClaimUri());
                 }
             }
+            List<String> requiredClaims = getOnlyRequiredClaims(claimURIList, requiredAttributes);
             //we assume (since id is unique per user) only one user exists for a given id
-            scimUser = this.getSCIMUser(userName, claimURIList);
+            scimUser = this.getSCIMUser(userName, requiredClaims);
 
             if(scimUser == null){
                 log.debug("User with userName : " + userName + " does not exist in the system.");
@@ -778,13 +783,13 @@ public class SCIMUserManager implements UserManager {
         }  else if(startIndex != 1){
             throw new NotImplementedException("Pagination is not supported");
         } else if(rootNode != null) {
-            return filterGroups(rootNode);
+            return filterGroups(rootNode, requiredAttributes);
         } else {
-            return listGroups();
+            return listGroups(requiredAttributes);
         }
     }
 
-    private List<Object> listGroups() throws CharonException {
+    private List<Object> listGroups(Map<String, Boolean> requiredAttributes) throws CharonException {
         List<Object> groupList = new ArrayList<>();
         //0th index is to store total number of results;
         groupList.add(0);
@@ -810,7 +815,7 @@ public class SCIMUserManager implements UserManager {
     }
 
 
-    private List<Object> filterGroups(Node node)
+    private List<Object> filterGroups(Node node, Map<String, Boolean> requiredAttributes)
             throws NotImplementedException, CharonException {
 
         if(node.getLeftNode() != null || node.getRightNode() != null){
@@ -1237,5 +1242,45 @@ public class SCIMUserManager implements UserManager {
 
 
         return claimsList;
+    }
+
+    /*
+     * This returns the only required attributes for value querying
+     * @param claimURIList
+     * @param requiredAttributes
+     * @return
+     */
+    private List<String> getOnlyRequiredClaims(List<String> claimURIList, Map<String, Boolean> requiredAttributes) {
+        List<String> requiredClaimList = new ArrayList<>();
+        for(String requiredClaim : requiredAttributes.keySet()) {
+            if(requiredAttributes.get(requiredClaim)) {
+                if (claimURIList.contains(requiredClaim)) {
+                    requiredClaimList.add(requiredClaim);
+                } else {
+                    String[] parts = requiredClaim.split("[.]");
+                    for (String claim : claimURIList) {
+                        if (parts.length == 3) {
+                            if (claim.contains(parts[0] +"." + parts[1])) {
+                                if (!requiredClaimList.contains(claim)) {
+                                    requiredClaimList.add(claim);
+                                }
+                            }
+                        } else if (parts.length == 2) {
+                            if (claim.contains(parts[0])) {
+                                if (!requiredClaimList.contains(claim)) {
+                                    requiredClaimList.add(claim);
+                                }
+                            }
+                        }
+
+                    }
+                }
+            } else {
+                if (!requiredClaimList.contains(requiredClaim)) {
+                    requiredClaimList.add(requiredClaim);
+                }
+            }
+        }
+        return requiredClaimList;
     }
 }
