@@ -49,7 +49,10 @@ import org.wso2.charon.core.v2.schema.SCIMConstants;
 import org.wso2.charon.core.v2.extensions.UserManager;
 import org.wso2.charon.core.v2.objects.Group;
 import org.wso2.charon.core.v2.objects.User;
+import org.wso2.charon.core.v2.schema.SCIMResourceSchemaManager;
+import org.wso2.charon.core.v2.schema.SCIMResourceTypeSchema;
 import org.wso2.charon.core.v2.utils.AttributeUtil;
+import org.wso2.charon.core.v2.utils.ResourceManagerUtil;
 import org.wso2.charon.core.v2.utils.codeutils.ExpressionNode;
 import org.wso2.charon.core.v2.utils.codeutils.Node;
 import org.wso2.charon.core.v2.utils.codeutils.SearchRequest;
@@ -337,7 +340,8 @@ public class SCIMUserManager implements UserManager {
             //check if username of the updating user existing in the userstore.
             try {
                 String userStoreDomainFromSP = getUserStoreDomainFromSP();
-                User oldUser = this.getUser(user.getId(), null);
+                SCIMResourceTypeSchema schema = SCIMResourceSchemaManager.getInstance().getUserResourceSchema();
+                User oldUser = this.getUser(user.getId(), ResourceManagerUtil.getAllAttributeURIs(schema));
                 if (userStoreDomainFromSP != null && !userStoreDomainFromSP
                         .equalsIgnoreCase(IdentityUtil.extractDomainFromName(oldUser.getUserName()))) {
                     throw new CharonException("User :" + oldUser.getUserName() + "is not belong to user store " +
