@@ -414,7 +414,7 @@ public class SCIMUserManager implements UserManager {
                 carbonUM.updateCredentialByAdmin(user.getUserName(), user.getPassword());
             }
             log.info("User: " + user.getUserName() + " updated updated through SCIM.");
-            return user;
+            return getUser(user.getId(),requiredAttributes);
         } catch (UserStoreException e) {
             throw new CharonException("Error while updating attributes of user: " + user.getUserName(), e);
         } catch (BadRequestException | CharonException e) {

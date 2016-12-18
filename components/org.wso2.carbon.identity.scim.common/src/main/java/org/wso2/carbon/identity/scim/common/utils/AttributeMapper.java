@@ -184,16 +184,16 @@ public class AttributeMapper {
         if (entryOfComplexAttribute.getSubAttributesList() != null &&
                 MapUtils.isNotEmpty(entryOfComplexAttribute.getSubAttributesList())) {
             entryAttributes = entryOfComplexAttribute.getSubAttributesList();
-        }
-        for (Attribute subEntry : entryAttributes.values()) {
-            // attribute can only be simple attribute and that also in the extension schema only
-            if (subEntry.getMultiValued()) {
-                setClaimsForMultivaluedAttribute(subEntry, claimsMap);
-            } else {
-                setClaimsForSimpleAttribute(subEntry, claimsMap);
+            for (Attribute subEntry : entryAttributes.values()) {
+                // attribute can only be simple attribute and that also in the extension schema only
+                if (subEntry.getMultiValued()) {
+                    setClaimsForMultivaluedAttribute(subEntry, claimsMap);
+                } else {
+                    setClaimsForSimpleAttribute(subEntry, claimsMap);
+                }
             }
-
         }
+
     }
 
 
