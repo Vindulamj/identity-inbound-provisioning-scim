@@ -52,7 +52,7 @@ public class SCIMCommonComponent {
     protected void activate(ComponentContext ctx) {
         try {
             String filePath = CarbonUtils.getCarbonConfigDirPath() + File.separator + "identity" + File.separator +
-                              SCIMCommonConstants.PROVISIONING_CONFIG_NAME;
+                              SCIMCommonConstants.CHARON_CONFIG_NAME;
 
             SCIMConfigProcessor scimConfigProcessor = SCIMConfigProcessor.getInstance();
             scimConfigProcessor.buildConfigFromFile(filePath);

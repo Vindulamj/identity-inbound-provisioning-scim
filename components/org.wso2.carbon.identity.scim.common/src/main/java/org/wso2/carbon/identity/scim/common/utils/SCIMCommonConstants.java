@@ -41,7 +41,7 @@ public class SCIMCommonConstants {
     public static final String INTERNAL_DOMAIN = "Internal";
 
     //config constants
-    public static final String PROVISIONING_CONFIG_NAME = "provisioning-config.xml";
+    public static final String CHARON_CONFIG_NAME = "charon-config.xml";
     public static final String ELEMENT_NAME_AUTHENTICATION_SCHEMES = "authenticationSchemes";;
     public static final String ELEMENT_NAME_PROPERTY = "Property";
     public static final String ELEMENT_NAME_SCHEMA = "schema";

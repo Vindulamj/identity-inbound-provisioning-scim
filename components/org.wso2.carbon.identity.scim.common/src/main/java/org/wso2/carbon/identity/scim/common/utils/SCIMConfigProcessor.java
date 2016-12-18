@@ -75,13 +75,13 @@ public class SCIMConfigProcessor {
                 throw new FileNotFoundException();
             }
         } catch (FileNotFoundException e) {
-            throw new CharonException(SCIMCommonConstants.PROVISIONING_CONFIG_NAME + "not found.");
+            throw new CharonException(SCIMCommonConstants.CHARON_CONFIG_NAME + "not found.");
         } catch (XMLStreamException e) {
             throw new CharonException("Error in building the configuration file: " +
-                    SCIMCommonConstants.PROVISIONING_CONFIG_NAME);
+                    SCIMCommonConstants.CHARON_CONFIG_NAME);
         } catch (IOException e) {
             throw new CharonException("Error in building the configuration file: " +
-                    SCIMCommonConstants.PROVISIONING_CONFIG_NAME);
+                    SCIMCommonConstants.CHARON_CONFIG_NAME);
         }
     }
 
