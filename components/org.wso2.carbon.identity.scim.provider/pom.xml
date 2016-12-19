@@ -71,18 +71,16 @@
             <version>5.5.0</version>
         </dependency>
         <dependency>
+            <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+            <artifactId>org.wso2.carbon.identity.scim.common</artifactId>
+            <version>5.1.12</version>
+        </dependency>
+        <dependency>
             <groupId>Charon</groupId>
             <artifactId>org.charon</artifactId>
             <version>3.0.0</version>
             <scope>system</scope>
             <systemPath>/home/vindula/Desktop/C4/Charon-3.0/modules/charon-core/target/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>Common</groupId>
-            <artifactId>org.scim.common</artifactId>
-            <version>3.0.0</version>
-            <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/C4/identity-inbound-provisioning-scim/components/org.wso2.carbon.identity.scim.common/target/org.wso2.carbon.identity.scim.common_5.1.12.jar</systemPath>
         </dependency>
 
     </dependencies>

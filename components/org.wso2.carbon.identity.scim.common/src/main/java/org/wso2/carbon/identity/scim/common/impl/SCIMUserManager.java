@@ -689,7 +689,7 @@ public class SCIMUserManager implements UserManager {
             }
             throw new CharonException("Error occurred while adding role : " + group.getDisplayName(), e);
         } catch (IdentitySCIMException | BadRequestException e) {
-            String error = "One or more roup members do not exist in the same user store. " +
+            String error = "One or more group members do not exist in the same user store. " +
                     "Hence, can not create the group: " + group.getDisplayName();
             throw new BadRequestException(error, ResponseCodeConstants.INVALID_VALUE);
         }
