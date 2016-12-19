@@ -27,6 +27,7 @@ public class ServiceProviderConfigResource extends AbstractResource {
         String userName = SCIMProviderConstants.DEFAULT_USERNAME;
         JSONEncoder encoder = null;
         try {
+
             IdentitySCIMManager identitySCIMManager = IdentitySCIMManager.getInstance();
 
             // obtain the encoder at this layer in case exceptions needs to be encoded.
