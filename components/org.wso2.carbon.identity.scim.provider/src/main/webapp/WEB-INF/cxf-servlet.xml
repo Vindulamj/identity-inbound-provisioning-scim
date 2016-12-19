@@ -70,4 +70,13 @@
 
     <bean id="ResourceTypeBean" class="org.wso2.carbon.identity.scim.provider.resources.RecourceTypeResource"/>
 
+    <jaxrs:server id="bulkResource" address="/v2/Bulk">
+        <jaxrs:serviceBeans>
+            <ref bean="BulkBean"/>
+        </jaxrs:serviceBeans>
+
+    </jaxrs:server>
+
+    <bean id="BulkBean" class="org.wso2.carbon.identity.scim.provider.resources.BulkResource"/>
+
 </beans>
