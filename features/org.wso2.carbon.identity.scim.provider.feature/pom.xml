@@ -71,7 +71,7 @@
                                     <type>war</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${basedir}/src/main/resources/</outputDirectory>
-                                    <destFileName>wso2.war</destFileName>
+                                    <destFileName>scim2.war</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>

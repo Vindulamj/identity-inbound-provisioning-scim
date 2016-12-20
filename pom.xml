@@ -232,8 +232,8 @@
     </pluginRepositories>
 
     <modules>
-        <module>components/org.wso2.carbon.identity.scim.common</module>
-        <module>components/org.wso2.carbon.identity.scim.provider</module>
+        <module>components/org.wso2.carbon.identity.scim.v2.common</module>
+        <module>components/org.wso2.carbon.identity.scim.v2.provider</module>
 
         <module>features/org.wso2.carbon.identity.scim.common.feature</module>
         <module>features/org.wso2.carbon.identity.scim.provider.feature</module>
