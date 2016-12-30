@@ -21,7 +21,7 @@ package org.wso2.carbon.identity.scim.v2.provider.impl;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.scim.v2.common.impl.IdentitySCIMManager;
-import org.wso2.charon.core.v2.exceptions.CharonException;
+import org.wso2.charon3.core.exceptions.CharonException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;

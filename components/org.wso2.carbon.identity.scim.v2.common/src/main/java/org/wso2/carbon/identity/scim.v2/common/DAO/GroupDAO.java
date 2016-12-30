@@ -16,16 +16,15 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.scim.v2.common.group;
+package org.wso2.carbon.identity.scim.v2.common.DAO;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
-import org.wso2.carbon.identity.scim.v2.common.utils.IdentitySCIMException;
+import org.wso2.carbon.identity.scim.v2.common.exceptions.IdentitySCIMException;
 import org.wso2.carbon.identity.scim.v2.common.utils.SCIMCommonUtils;
-import org.wso2.carbon.identity.scim.v2.common.utils.SQLQueries;
-import org.wso2.charon.core.v2.schema.SCIMConstants;
+import org.wso2.charon3.core.schema.SCIMConstants;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

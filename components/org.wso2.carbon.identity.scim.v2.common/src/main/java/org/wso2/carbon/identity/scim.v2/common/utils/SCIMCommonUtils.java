@@ -18,11 +18,9 @@
 
 package org.wso2.carbon.identity.scim.v2.common.utils;
 
-import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
-import org.wso2.carbon.identity.scim.v2.common.utils.SCIMCommonConstants;
 import org.wso2.carbon.user.core.UserCoreConstants;
 
 /**

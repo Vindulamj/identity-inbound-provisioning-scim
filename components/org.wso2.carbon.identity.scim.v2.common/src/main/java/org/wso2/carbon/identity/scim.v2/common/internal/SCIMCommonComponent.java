@@ -28,10 +28,10 @@ import org.wso2.carbon.identity.scim.v2.common.utils.SCIMCommonUtils;
 import org.wso2.carbon.identity.scim.v2.common.utils.SCIMConfigProcessor;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
 import org.wso2.carbon.utils.CarbonUtils;
-import org.wso2.charon.core.v2.config.SCIMConfigConstants;
-import org.wso2.charon.core.v2.config.SCIMUserSchemaExtensionBuilder;
-import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.exceptions.InternalErrorException;
+import org.wso2.charon3.core.config.SCIMConfigConstants;
+import org.wso2.charon3.core.config.SCIMUserSchemaExtensionBuilder;
+import org.wso2.charon3.core.exceptions.CharonException;
+import org.wso2.charon3.core.exceptions.InternalErrorException;
 
 
 import java.io.File;

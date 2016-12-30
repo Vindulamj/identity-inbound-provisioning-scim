@@ -21,12 +21,12 @@
         <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
         <artifactId>identity-inbound-provisioning-scim</artifactId>
         <relativePath> ../../pom.xml</relativePath>
-        <version>5.1.5</version>
+        <version>1.0.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>org.wso2.carbon.identity.scim.v2.provider</artifactId>
-    <name>WSO2 Carbon - SCIM - Service Provider Component</name>
+    <name>WSO2 Carbon - SCIM 2.0 - Service Provider Component</name>
     <packaging>war</packaging>
 
     <dependencies>
@@ -71,20 +71,17 @@
             <version>5.5.0</version>
         </dependency>
         <dependency>
-            <groupId>Charon</groupId>
-            <artifactId>org.charon</artifactId>
+            <groupId>org.wso2.charon</groupId>
+            <artifactId>org.wso2.charon3.core</artifactId>
             <version>3.0.0</version>
-            <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/C4/Final Pack/org.wso2.charon.core.v2-3.0.0.jar</systemPath>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>scim.common</groupId>
-            <artifactId>org.scim.common</artifactId>
-            <version>3.0.0</version>
-            <scope>system</scope>
-            <systemPath>/home/vindula/Desktop/C4/Final Pack/org.wso2.carbon.identity.scim.v2.common-5.1.12.jar</systemPath>
+            <groupId>org.wso2.carbon.identity.inbound.provisioning.scim</groupId>
+            <artifactId>org.wso2.carbon.identity.scim.v2.common</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
         </dependency>
-
     </dependencies>
 
     <build>

@@ -21,12 +21,12 @@ package org.wso2.carbon.identity.scim.v2.provider.resources;
 import org.wso2.carbon.identity.scim.v2.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.v2.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.v2.provider.util.SupportUtils;
-import org.wso2.charon.core.v2.encoder.JSONEncoder;
-import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.exceptions.FormatNotSupportedException;
-import org.wso2.charon.core.v2.extensions.UserManager;
-import org.wso2.charon.core.v2.protocol.SCIMResponse;
-import org.wso2.charon.core.v2.protocol.endpoints.BulkResourceManager;
+import org.wso2.charon3.core.encoder.JSONEncoder;
+import org.wso2.charon3.core.exceptions.CharonException;
+import org.wso2.charon3.core.exceptions.FormatNotSupportedException;
+import org.wso2.charon3.core.extensions.UserManager;
+import org.wso2.charon3.core.protocol.SCIMResponse;
+import org.wso2.charon3.core.protocol.endpoints.BulkResourceManager;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;

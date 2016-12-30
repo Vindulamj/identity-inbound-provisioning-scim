@@ -28,7 +28,7 @@
     <artifactId>identity-inbound-provisioning-scim</artifactId>
     <packaging>pom</packaging>
     <modelVersion>4.0.0</modelVersion>
-    <version>5.1.12</version>
+    <version>1.0.0</version>
     <name>WSO2 Carbon - SCIM Provisioning Module</name>
     <description>
 
@@ -39,7 +39,7 @@
         <url>https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</url>
         <developerConnection>scm:git:https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</developerConnection>
         <connection>scm:git:https://github.com/wso2-extensions/identity-inbound-provisioning-scim.git</connection>
-        <tag>v5.1.2</tag>
+        <tag>v1.0.0</tag>
     </scm>
 
     <dependencyManagement>
@@ -54,39 +54,6 @@
                 <groupId>org.apache.cxf.wso2</groupId>
                 <artifactId>cxf-bundle</artifactId>
                 <version>${cxf-bundle.wso2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.common.feature</artifactId>
-                <version>${project.version}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.provider.feature</artifactId>
-                <version>${project.version}</version>
-                <type>zip</type>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.ui</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.common.stub</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.wso2.carbon.identity</groupId>
-                <artifactId>org.wso2.carbon.identity.scim.provider</artifactId>
-                <version>${project.version}</version>
-                <type>war</type>
             </dependency>
             <dependency>
                 <groupId>org.wso2.carbon.identity</groupId>

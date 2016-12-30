@@ -21,8 +21,7 @@ import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.identity.scim.v2.common.utils.AuthenticationSchema;
-import org.wso2.charon.core.v2.exceptions.CharonException;
+import org.wso2.charon3.core.exceptions.CharonException;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;

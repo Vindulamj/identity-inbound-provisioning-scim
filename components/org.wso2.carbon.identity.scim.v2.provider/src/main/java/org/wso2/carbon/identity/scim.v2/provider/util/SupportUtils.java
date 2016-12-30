@@ -20,7 +20,7 @@ package org.wso2.carbon.identity.scim.v2.provider.util;
 
 import org.apache.axiom.om.util.Base64;
 import org.apache.commons.collections.MapUtils;
-import org.wso2.charon.core.v2.protocol.SCIMResponse;
+import org.wso2.charon3.core.protocol.SCIMResponse;
 
 import javax.ws.rs.core.Response;
 import java.util.Map;

@@ -16,7 +16,7 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.scim.v2.common.utils;
+package org.wso2.carbon.identity.scim.v2.common.exceptions;
 
 import org.wso2.carbon.identity.base.IdentityException;
 

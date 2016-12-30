@@ -24,11 +24,11 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.scim.v2.common.impl.IdentitySCIMManager;
 import org.wso2.carbon.identity.scim.v2.provider.util.SCIMProviderConstants;
 import org.wso2.carbon.identity.scim.v2.provider.util.SupportUtils;
-import org.wso2.charon.core.v2.encoder.JSONEncoder;
-import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.extensions.UserManager;
-import org.wso2.charon.core.v2.protocol.SCIMResponse;
-import org.wso2.charon.core.v2.protocol.endpoints.ServiceProviderConfigResourceManager;
+import org.wso2.charon3.core.encoder.JSONEncoder;
+import org.wso2.charon3.core.exceptions.CharonException;
+import org.wso2.charon3.core.extensions.UserManager;
+import org.wso2.charon3.core.protocol.SCIMResponse;
+import org.wso2.charon3.core.protocol.endpoints.ServiceProviderConfigResourceManager;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;

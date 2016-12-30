@@ -32,12 +32,12 @@ import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.claim.ClaimManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
-import org.wso2.charon.core.v2.config.CharonConfiguration;
-import org.wso2.charon.core.v2.encoder.JSONEncoder;
-import org.wso2.charon.core.v2.exceptions.CharonException;
-import org.wso2.charon.core.v2.extensions.*;
-import org.wso2.charon.core.v2.protocol.endpoints.AbstractResourceManager;
-import org.wso2.charon.core.v2.schema.SCIMConstants;
+import org.wso2.charon3.core.config.CharonConfiguration;
+import org.wso2.charon3.core.encoder.JSONEncoder;
+import org.wso2.charon3.core.exceptions.CharonException;
+import org.wso2.charon3.core.extensions.*;
+import org.wso2.charon3.core.protocol.endpoints.AbstractResourceManager;
+import org.wso2.charon3.core.schema.SCIMConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
